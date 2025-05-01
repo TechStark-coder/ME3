@@ -27,15 +27,22 @@ export default function Home() {
       // Ensure body takes full height for background visibility
       document.body.style.minHeight = '100vh';
     } else {
-      // Clear background if no image is selected
+      // Reset background styles to allow CSS to take over
       document.body.style.backgroundImage = '';
-       document.body.style.minHeight = ''; // Reset min height
+      document.body.style.backgroundSize = '';
+      document.body.style.backgroundPosition = '';
+      document.body.style.backgroundRepeat = '';
+      document.body.style.minHeight = ''; // Reset min height
     }
 
     // Cleanup function to remove background style when component unmounts
     // and revoke the last object URL
     return () => {
+      // Reset styles on unmount
       document.body.style.backgroundImage = '';
+      document.body.style.backgroundSize = '';
+      document.body.style.backgroundPosition = '';
+      document.body.style.backgroundRepeat = '';
       document.body.style.minHeight = '';
       if (previousObjectUrl) {
         URL.revokeObjectURL(previousObjectUrl);

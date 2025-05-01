@@ -123,10 +123,10 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
 
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+    <div className="flex flex-col items-center justify-center gap-4 w-full">
       {!isCameraOpen ? (
         <>
-          <Button onClick={handleUploadClick} variant="outline" className="w-full sm:w-auto glassmorphic border-accent text-accent-foreground hover:bg-accent/90 hover:text-accent-foreground">
+          <Button onClick={handleUploadClick} variant="outline" className="w-full glassmorphic border-accent text-accent-foreground hover:bg-accent/90 hover:text-accent-foreground">
             <Upload className="mr-2 h-4 w-4" /> Upload Image
           </Button>
           <Input
@@ -139,7 +139,7 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
           />
           <Label htmlFor="image-upload" className="sr-only">Upload Image</Label>
 
-          <Button onClick={startCamera} variant="outline" className="w-full sm:w-auto glassmorphic border-accent text-accent-foreground hover:bg-accent/90 hover:text-accent-foreground">
+          <Button onClick={startCamera} variant="outline" className="w-full glassmorphic border-accent text-accent-foreground hover:bg-accent/90 hover:text-accent-foreground">
             <Camera className="mr-2 h-4 w-4" /> Use Camera
           </Button>
         </>
@@ -148,11 +148,11 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
           {/* Video element initially hidden until stream is ready */}
           <video ref={videoRef} className={`w-full max-w-md rounded-lg ${stream ? 'block' : 'hidden'}`} playsInline />
           <canvas ref={canvasRef} className="hidden"></canvas>
-          <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
-            <Button onClick={takePicture} className="w-full sm:w-auto bg-accent text-accent-foreground hover:bg-accent/90">
+          <div className="flex flex-col gap-4 w-full max-w-xs justify-center">
+            <Button onClick={takePicture} className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
               <Camera className="mr-2 h-4 w-4" /> Capture
             </Button>
-            <Button onClick={stopCamera} variant="destructive" className="w-full sm:w-auto">
+            <Button onClick={stopCamera} variant="destructive" className="w-full">
               Cancel
             </Button>
           </div>
