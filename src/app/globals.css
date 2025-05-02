@@ -85,10 +85,11 @@ body {
 
   /* Apply cursor light effect */
   /* Create a radial gradient centered at the cursor position */
+  /* Adjusted gradient stop from 80% to 60% for tighter effect */
   background-image: radial-gradient(
     circle var(--cursor-light-size) at var(--cursor-x) var(--cursor-y),
     var(--cursor-light-color),
-    transparent 80%
+    transparent 60%
   ), linear-gradient(135deg, hsl(var(--gradient-start)), hsl(var(--gradient-end)), hsl(var(--gradient-start)));
   background-attachment: fixed; /* Keep the light fixed relative to the viewport */
 }
@@ -142,3 +143,4 @@ body {
     animation: fade-slide-in 0.6s ease-out forwards; /* Slightly slower */
   }
 }
+
