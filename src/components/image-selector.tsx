@@ -369,8 +369,10 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect, disabled =
         </div>
       ) : (
         <div className="w-full flex flex-col items-center gap-4">
-           <div className="relative w-full max-w-md border-2 border-border/50 rounded-lg overflow-hidden shadow-md bg-muted">
-             <div className={`w-full aspect-video flex items-center justify-center`}>
+           {/* Removed max-w-md to allow the camera view to take more space */}
+           <div className="relative w-full border-2 border-border/50 rounded-lg overflow-hidden shadow-md bg-muted">
+             {/* Increased aspect ratio for wider view, adjusted based on typical webcam ratios */}
+             <div className={`w-full aspect-[16/9] flex items-center justify-center`}>
                   {/* Video element always in DOM for ref */}
                  <video
                     ref={videoRef}
