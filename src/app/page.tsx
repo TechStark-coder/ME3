@@ -11,25 +11,36 @@ import Image from 'next/image';
 import { compareImages } from '@/ai/flows/compare-images-flow'; // Import the AI flow
 import { useToast } from '@/hooks/use-toast';
 
-// Helper function to convert blob URL to data URI
-async function blobUrlToDataUri(blobUrl: string): Promise<string> {
-  const response = await fetch(blobUrl);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch blob: ${response.statusText}`);
+// Helper function to convert blob URL or return data URI
+async function blobUrlToDataUri(url: string): Promise<string> {
+  // Check if it's already a data URI
+  if (url.startsWith('data:')) {
+    return url;
   }
-  const blob = await response.blob();
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-        if (typeof reader.result === 'string') {
-            resolve(reader.result);
-        } else {
-            reject(new Error('Failed to read blob as data URL.'));
-        }
-    };
-    reader.onerror = (error) => reject(error);
-    reader.readAsDataURL(blob);
-  });
+
+  // If it's a blob URL, fetch and convert
+  if (url.startsWith('blob:')) {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch blob: ${response.statusText}`);
+      }
+      const blob = await response.blob();
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            if (typeof reader.result === 'string') {
+                resolve(reader.result);
+            } else {
+                reject(new Error('Failed to read blob as data URL.'));
+            }
+        };
+        reader.onerror = (error) => reject(error);
+        reader.readAsDataURL(blob);
+      });
+  }
+
+  // If it's neither, throw an error or handle as appropriate
+  throw new Error(`Invalid URL type: ${url.substring(0, 30)}...`);
 }
 
 
@@ -51,11 +62,13 @@ export default function Home() {
 
 
   const handleImageSelect = useCallback((imageUrl: string, fileName?: string) => {
+    let added = false;
     setImageUrls((prevUrls) => {
       const firstEmptyIndex = prevUrls.findIndex(url => url === null);
       if (firstEmptyIndex !== -1) {
         const newUrls = [...prevUrls];
         newUrls[firstEmptyIndex] = imageUrl;
+        added = true; // Mark as added
 
         // Revoke previous URL for this slot if necessary
         if (currentObjectUrls[firstEmptyIndex] && currentObjectUrls[firstEmptyIndex]?.startsWith('blob:')) {
@@ -64,34 +77,44 @@ export default function Home() {
         // Update current object URLs
         setCurrentObjectUrls(prevObjUrls => {
             const newObjUrls = [...prevObjUrls];
-            newObjUrls[firstEmptyIndex] = imageUrl;
+            newObjUrls[firstEmptyIndex] = imageUrl.startsWith('blob:') ? imageUrl : null; // Only store blob URLs for revocation
             return newObjUrls;
         });
 
          // Update file names
         setImageFileNames(prevNames => {
             const newNames = [...prevNames];
-            newNames[firstEmptyIndex] = fileName || (imageUrl.startsWith('blob:') ? 'captured_image.jpg' : 'uploaded_image');
+            newNames[firstEmptyIndex] = "Image uploaded"; // Set fixed name
             return newNames;
         });
 
 
         return newUrls;
       }
-      // If both slots are filled, potentially replace the first one or show a message
+      // If both slots are filled, show a message
       toast({
         title: "Slots Full",
         description: "Remove an image to add a new one.",
         variant: "destructive",
       });
-      // Revoke the URL if it wasn't used
+      // Revoke the URL if it wasn't used and is a blob URL
       if (imageUrl.startsWith('blob:')) {
         URL.revokeObjectURL(imageUrl);
       }
       return prevUrls;
     });
     setErrorMessage(null); // Clear previous errors
-  }, [currentObjectUrls, toast]); // Added toast to dependencies
+
+    // Check if both images are now selected after adding
+     setImageUrls(currentUrls => {
+        if (added && currentUrls[0] && currentUrls[1]) {
+            handleCompareImages(); // Trigger comparison immediately
+        }
+        return currentUrls; // Return the updated state
+    });
+
+  }, [currentObjectUrls, toast]); // Removed handleCompareImages from deps to avoid potential loops, added toast
+
 
   const handleRemoveImage = (index: number) => {
      setImageUrls((prevUrls) => {
@@ -119,15 +142,14 @@ export default function Home() {
   };
 
   const handleCompareImages = async () => {
+    // Double check images are present before proceeding
     if (imageUrls.some(url => url === null)) {
-      setErrorMessage("Please select two images to compare.");
-      toast({
-        title: "Missing Images",
-        description: "Please select two images before comparing.",
-        variant: "destructive",
-      });
+      console.warn("Compare called but one or more images are missing.");
+      // Optionally show toast or error message if needed, but might be redundant
+      // if called automatically after second image selection.
       return;
     }
+
 
     setIsLoading(true);
     setErrorMessage(null);
@@ -135,7 +157,7 @@ export default function Home() {
     setShowResults(false);
 
     try {
-      // Convert blob URLs to data URIs
+      // Convert blob URLs to data URIs (or pass through existing data URIs)
       const dataUri1 = await blobUrlToDataUri(imageUrls[0]!);
       const dataUri2 = await blobUrlToDataUri(imageUrls[1]!);
 
@@ -160,6 +182,9 @@ export default function Home() {
         description: errorDesc,
         variant: "destructive",
       });
+      // Reset potentially inconsistent state on error
+      setShowResults(false);
+      setAnalysisResult(null);
     } finally {
       setIsLoading(false);
     }
@@ -232,7 +257,7 @@ export default function Home() {
                         className="object-contain rounded-md mb-2"
                          data-ai-hint="abstract comparison"
                       />
-                       <p className="text-xs text-muted-foreground truncate w-full px-2" title={imageFileNames[index] || ''}>
+                       <p className="text-sm text-foreground truncate w-full px-2 font-medium" title={imageFileNames[index] || ''}>
                             {imageFileNames[index]}
                        </p>
                       <Button
@@ -254,6 +279,7 @@ export default function Home() {
               ))}
             </div>
 
+             {/* Show ImageSelector only if less than 2 images are selected */}
             {imageUrls.filter(url => url !== null).length < 2 && (
                 <ImageSelector onImageSelect={handleImageSelect} />
             )}
@@ -265,7 +291,9 @@ export default function Home() {
               </p>
             )}
 
-            {imageUrls[0] && imageUrls[1] && !isLoading && (
+             {/* No explicit compare button needed as it triggers automatically */}
+            {/* Remove or comment out the manual compare button */}
+            {/* {imageUrls[0] && imageUrls[1] && !isLoading && (
               <div className="mt-6 flex gap-4 justify-center">
                 <Button onClick={handleCompareImages} className="bg-accent text-accent-foreground hover:bg-accent/90">
                     Compare Images
@@ -274,10 +302,11 @@ export default function Home() {
                     <RefreshCw className="mr-2 h-4 w-4" /> Start Over
                 </Button>
               </div>
-            )}
-             {/* Button to start over if only one image is selected */}
-            {imageUrls.filter(url => url !== null).length > 0 && !(imageUrls[0] && imageUrls[1]) && (
-                <Button onClick={handleReset} variant="outline" className="mt-6">
+            )} */}
+
+            {/* Show Reset button if any image is selected */}
+            {imageUrls.some(url => url !== null) && !isLoading && !showResults && (
+                 <Button onClick={handleReset} variant="outline" className="mt-6">
                     <RefreshCw className="mr-2 h-4 w-4" /> Reset
                 </Button>
             )}
@@ -288,3 +317,4 @@ export default function Home() {
     </main>
   );
 }
+
