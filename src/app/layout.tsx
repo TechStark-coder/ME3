@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 // Removed Geist fonts as per globals.css change
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"; // Import Toaster
-// import CursorLightEffect from '@/components/cursor-light-effect'; // Remove CursorLightEffect
+import CursorLightEffect from '@/components/cursor-light-effect'; // Re-add CursorLightEffect
 
 export const metadata: Metadata = {
   title: 'Spot the Difference AI', // Updated title
@@ -19,7 +19,7 @@ export default function RootLayout({
     <html lang="en">
       {/* Removed font variables from body className */}
       <body className={`antialiased`}>
-        {/* <CursorLightEffect /> */} {/* Remove the cursor light effect component */}
+        <CursorLightEffect /> {/* Re-add the cursor light effect component */}
         {children}
         <Toaster /> {/* Add Toaster component */}
       </body>

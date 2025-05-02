@@ -48,11 +48,12 @@
    --sidebar-border: 248 59% 32%; /* Dark border */
    --sidebar-ring: var(--primary); /* Teal ring */
 
-  /* Remove cursor light effect variables */
-  /* --cursor-x: 50vw; */
-  /* --cursor-y: 50vh; */
-  /* --cursor-light-size: 400px; */
-  /* --cursor-light-color: hsla(0, 0%, 0%, 0.06); */
+  /* Cursor light effect variables */
+  --cursor-x: 50vw;
+  --cursor-y: 50vh;
+  --cursor-light-size: 400px;
+   /* Increased alpha from 0.06 to 0.15 for brightness */
+  --cursor-light-color: hsla(0, 0%, 100%, 0.15);
 }
 
 /* Define the gradient animation */
@@ -81,6 +82,15 @@ body {
   min-height: 100vh;
   /* Ensure text is readable based on theme variables */
   color: hsl(var(--foreground));
+
+  /* Apply cursor light effect */
+  /* Create a radial gradient centered at the cursor position */
+  background-image: radial-gradient(
+    circle var(--cursor-light-size) at var(--cursor-x) var(--cursor-y),
+    var(--cursor-light-color),
+    transparent 80%
+  ), linear-gradient(135deg, hsl(var(--gradient-start)), hsl(var(--gradient-end)), hsl(var(--gradient-start)));
+  background-attachment: fixed; /* Keep the light fixed relative to the viewport */
 }
 
 @layer base {
