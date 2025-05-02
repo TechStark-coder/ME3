@@ -39,9 +39,6 @@ export default function Home() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null); // Ref for the hidden file input
   const [isDraggingOver, setIsDraggingOver] = useState<[boolean, boolean]>([false, false]); // State for drag-over effect
-  const audioRef = useRef<HTMLAudioElement | null>(null); // Ref for audio
-  const [isAudioReady, setIsAudioReady] = useState(false); // State to track audio readiness
-  const audioSrc = '/analysis-sound.mp3'; // Define audio source path
 
   // Callback for when an image is selected (either via click, drag, camera, or explicit upload button)
   const handleImageSelect = useCallback((dataUrl: string | null, fileName: string = "Image uploaded") => {
@@ -204,10 +201,6 @@ export default function Home() {
      setShowResultsPopup(false);
      setErrorMessage(null);
      setIsLoading(false); // Stop loading if an image is removed
-     if (isAudioReady && audioRef.current) {
-        audioRef.current.pause(); // Stop audio if playing
-        audioRef.current.currentTime = 0; // Reset audio time
-     }
      console.log(`Image removed from slot ${index + 1}`);
   };
 
@@ -229,13 +222,6 @@ export default function Home() {
     setAnalysisDifferences(null);
     setShowResultsPopup(false);
     console.log('Starting image comparison process...');
-    if (isAudioReady && audioRef.current) {
-        console.log('Attempting to play audio...');
-        audioRef.current.play().catch(err => console.warn("Audio play failed:", err)); // Play audio, catch errors
-    } else {
-        console.log('Audio not ready or ref not available, skipping play.');
-    }
-
 
     try {
       console.log('Ensuring data URIs...');
@@ -248,10 +234,6 @@ export default function Home() {
            setErrorMessage("One or both images could not be processed. Please try re-uploading or recapturing.");
            // Toast is likely already shown by ensureDataUri/blobUrlToDataUri
            setIsLoading(false);
-           if (isAudioReady && audioRef.current) {
-               audioRef.current.pause(); // Stop audio on error
-               audioRef.current.currentTime = 0;
-            }
           return;
       }
 
@@ -261,10 +243,6 @@ export default function Home() {
         image2DataUri: dataUri2,
       });
        console.log('AI comparison completed, result:', result);
-        if (isAudioReady && audioRef.current) {
-            audioRef.current.pause(); // Stop audio on success
-            audioRef.current.currentTime = 0; // Reset audio time
-        }
 
       if (!result || !Array.isArray(result.differences)) {
           console.error('Invalid result structure from AI:', result);
@@ -288,10 +266,6 @@ export default function Home() {
 
     } catch (error) {
       console.error("Error during image comparison:", error);
-        if (isAudioReady && audioRef.current) {
-            audioRef.current.pause(); // Stop audio on catch
-            audioRef.current.currentTime = 0;
-        }
       let errorDesc = 'An unexpected error occurred during analysis.';
       if (error instanceof Error) {
         if (error.message.includes('SAFETY')) {
@@ -327,10 +301,6 @@ export default function Home() {
     setAnalysisDifferences(null);
     setShowResultsPopup(false);
     setErrorMessage(null);
-     if (isAudioReady && audioRef.current) {
-         audioRef.current.pause(); // Stop audio on reset
-         audioRef.current.currentTime = 0;
-     }
     if (fileInputRef.current) {
       fileInputRef.current.value = ""; // Reset file input
     }
@@ -426,85 +396,6 @@ export default function Home() {
   // Determine button visibility
   const showCompareButton = imageUrls[0] !== null && imageUrls[1] !== null && !isLoading && !showResultsPopup; // Only show if both images selected, not loading, and results not shown
   const showResetButton = (imageUrls.some(url => url !== null) || showResultsPopup) && !isLoading;
-
-
-    // Setup audio element on component mount
-    useEffect(() => {
-       // IMPORTANT: Make sure the 'analysis-sound.mp3' file exists in the public folder
-       // and that the browser supports its format (MP3 is widely supported)
-       console.log(`Attempting to load audio source: ${audioSrc}`);
-
-       const audio = new Audio(audioSrc);
-       audio.loop = true;
-       audio.volume = 0.3;
-
-       // Event listener to track when audio is ready to play
-       const handleCanPlay = () => {
-           console.log("Audio is ready to play.");
-           setIsAudioReady(true);
-       };
-
-       // Event listener for audio errors
-       const handleError = (e: Event) => {
-           let errorMessage = "Unknown audio error";
-            if (audioRef.current?.error) {
-                switch (audioRef.current.error.code) {
-                    case MediaError.MEDIA_ERR_ABORTED:
-                        errorMessage = "Audio playback aborted.";
-                        break;
-                    case MediaError.MEDIA_ERR_NETWORK:
-                        errorMessage = "Network error caused audio download to fail. Check network and file path.";
-                        break;
-                    case MediaError.MEDIA_ERR_DECODE:
-                        errorMessage = "Audio decoding error. The file might be corrupted or in an unsupported codec.";
-                        break;
-                    case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
-                        errorMessage = `Audio source format not supported by this browser. Path: ${audioSrc}. Ensure it's a supported format like MP3.`;
-                        break;
-                    default:
-                        errorMessage = `An unexpected audio error occurred (Code: ${audioRef.current.error.code})`;
-                }
-                 console.error(`Audio Error: ${errorMessage}`, e);
-                 toast({ // Show a toast for critical errors like unsupported format
-                   title: 'Audio Playback Warning',
-                   description: errorMessage.includes('format not supported') ? errorMessage : 'Could not load analysis sound.',
-                   variant: 'destructive', // More prominent for critical issues
-                   duration: 7000
-                 });
-            } else {
-                 console.error("Audio Error (no error code available):", e);
-                 toast({
-                    title: 'Audio Warning',
-                    description: 'An unknown error occurred loading the analysis sound.',
-                    variant: 'default',
-                  });
-            }
-           setIsAudioReady(false);
-       };
-
-       audio.addEventListener('canplaythrough', handleCanPlay);
-       audio.addEventListener('error', handleError);
-
-       audioRef.current = audio;
-
-       // Attempt to load the audio
-       console.log('Calling audio.load()...');
-       audio.load(); // Explicitly call load
-
-       return () => {
-         // Cleanup audio element and listeners on unmount
-         if (audioRef.current) {
-             console.log("Cleaning up audio element.");
-             audioRef.current.removeEventListener('canplaythrough', handleCanPlay);
-             audioRef.current.removeEventListener('error', handleError);
-             audioRef.current.pause(); // Ensure audio is stopped
-             audioRef.current.src = ""; // Detach source
-         }
-         audioRef.current = null;
-         setIsAudioReady(false);
-         console.log("Audio element cleanup complete.");
-       };
-    }, [audioSrc]); // Dependency on audioSrc
 
 
   return (
@@ -648,4 +539,3 @@ export default function Home() {
      </main>
   );
 }
-
