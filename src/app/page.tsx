@@ -69,8 +69,10 @@ export default function Home() {
 
   const handleImageSelect = useCallback((imageUrl: string, fileName?: string) => {
     let added = false;
+    let firstEmptyIndex = -1; // Keep track of the index where the image was added
+
     setImageUrls((prevUrls) => {
-      const firstEmptyIndex = prevUrls.findIndex(url => url === null);
+      firstEmptyIndex = prevUrls.findIndex(url => url === null);
       if (firstEmptyIndex !== -1) {
         const newUrls = [...prevUrls];
         newUrls[firstEmptyIndex] = imageUrl;
@@ -110,15 +112,6 @@ export default function Home() {
       return prevUrls;
     });
     setErrorMessage(null); // Clear previous errors
-
-    // REMOVED: Do not trigger comparison automatically
-    // Check if both images are now selected after adding
-    //  setImageUrls(currentUrls => {
-    //     if (added && currentUrls[0] && currentUrls[1]) {
-    //         handleCompareImages(); // Trigger comparison immediately
-    //     }
-    //     return currentUrls; // Return the updated state
-    // });
 
   }, [currentObjectUrls, toast]);
 
@@ -310,8 +303,8 @@ export default function Home() {
                     </Button>
                 )}
 
-                {/* Show Reset button if any image is selected and not loading/showing results */}
-                {imageUrls.some(url => url !== null) && !isLoading && !showResults && (
+                {/* Show Reset button if any image is selected OR if results are shown */}
+                {(imageUrls.some(url => url !== null) || showResults) && !isLoading && (
                     <Button onClick={handleReset} variant="outline" className="w-full sm:w-auto">
                         <RefreshCw className="mr-2 h-4 w-4" /> Reset
                     </Button>
