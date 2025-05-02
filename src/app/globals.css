@@ -3,89 +3,88 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Define new red/black colors */
+/* Define new gradient colors */
 :root {
-  --red-dark: 0 100% 25%; /* Slightly lighter Dark Red */
-  --red-mid: 0 90% 50%; /* Mid Red - brighter */
-  --black-true: 0 0% 0%; /* True Black */
-  --gray-dark: 0 0% 20%; /* Dark Gray for accents */
-  --gray-light: 0 0% 95%; /* Light Gray for text on dark elements */
-  --white-off: 0 0% 98%; /* Off-white for backgrounds */
-  --white-soft: 0 0% 96%; /* Slightly softer white */
+  --gradient-start: 163 41% 60%; /* #43C6AC */
+  --gradient-end: 248 59% 21%; /* #191654 */
 
-  /* Override existing theme variables for a LIGHTER red/black theme */
-  --background: 0 0% 99%; /* Very light background (almost white) */
-  --foreground: 0 0% 3.9%; /* Dark foreground for contrast */
-  --card: 0 0% 100%; /* White card background */
-  --card-foreground: 0 0% 3.9%;
-  --popover: 0 0% 100%; /* White popover */
-  --popover-foreground: 0 0% 3.9%;
-  --primary: var(--red-mid); /* Use mid red as primary */
-  --primary-foreground: var(--white-off); /* White/Light text on red */
-  --secondary: 0 0% 96.1%; /* Light gray secondary background */
-  --secondary-foreground: 0 0% 9%; /* Dark text on light gray */
-  --muted: 0 0% 96.1%; /* Light muted background */
-  --muted-foreground: 0 0% 45.1%; /* Mid-gray muted text */
-  --accent: 0 0% 94%; /* Slightly darker light gray accent */
-  --accent-foreground: 0 0% 9%; /* Dark text on accent */
-  --destructive: 0 84.2% 60.2%; /* Standard destructive red */
-  --destructive-foreground: var(--white-off);
-  --border: 0 0% 89.8%; /* Light border */
-  --input: 0 0% 93%; /* Slightly darker light input background */
-  --ring: var(--red-mid); /* Use mid red for ring */
-  --chart-1: var(--red-mid);
-  --chart-2: 0 80% 65%; /* Lighter variation of red */
-  --chart-3: 0 70% 45%; /* Mid variation */
-  --chart-4: 0 100% 70%; /* Even brighter variation */
-  --chart-5: var(--red-dark); /* Darker red */
+  /* NEW Dark Theme based on gradient */
+  --background: var(--gradient-end); /* Base dark color */
+  --foreground: 0 0% 98%; /* Light text */
+  --card: 248 59% 15%; /* Darker card */
+  --card-foreground: 0 0% 98%;
+  --popover: 248 59% 15%;
+  --popover-foreground: 0 0% 98%;
+  --primary: var(--gradient-start); /* Use gradient start as primary */
+  --primary-foreground: 248 59% 10%; /* Dark text on primary */
+  --secondary: 248 59% 25%; /* Slightly lighter dark secondary */
+  --secondary-foreground: 0 0% 90%; /* Lighter grey text */
+  --muted: 248 59% 25%;
+  --muted-foreground: 0 0% 60%; /* Mid-grey muted text */
+  --accent: 248 59% 30%; /* Slightly lighter dark accent */
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 70% 55%; /* Slightly adjusted destructive red */
+  --destructive-foreground: 0 0% 98%;
+  --border: 248 59% 35%; /* Visible border on dark bg */
+  --input: 248 59% 35%; /* Input background */
+  --ring: var(--gradient-start); /* Use new primary for ring */
   --radius: 0.5rem;
 
-  /* Sidebar (adjusting for light theme base) */
-   --sidebar-background: 0 0% 98%; /* Light sidebar */
-   --sidebar-foreground: 0 0% 3.9%; /* Dark text */
-   --sidebar-primary: var(--red-mid); /* Red primary */
-   --sidebar-primary-foreground: var(--white-off); /* Light text on primary */
-   --sidebar-accent: 0 0% 92%; /* Lighter accent */
-   --sidebar-accent-foreground: 0 0% 9%; /* Dark text on accent */
-   --sidebar-border: 0 0% 88%; /* Light border */
-   --sidebar-ring: var(--red-mid); /* Red ring */
+  /* Charts based on new primary */
+  --chart-1: var(--primary);
+  --chart-2: 163 50% 70%; /* Lighter variation */
+  --chart-3: 163 35% 50%; /* Darker variation */
+  --chart-4: 170 45% 65%; /* Shifted hue variation */
+  --chart-5: 155 38% 55%; /* Another variation */
 
-   /* Variables for cursor light effect */
-   --cursor-x: 50vw; /* Default to center */
-   --cursor-y: 50vh;
-   --cursor-light-size: 400px; /* Size of the light circle */
-   /* Adjusted for lighter background - darker, less opaque light */
-   --cursor-light-color: hsla(0, 0%, 0%, 0.06);
+
+  /* Sidebar (adjusting for dark theme base) */
+   --sidebar-background: 248 59% 18%; /* Dark sidebar slightly different from main bg */
+   --sidebar-foreground: 0 0% 98%; /* Light text */
+   --sidebar-primary: var(--primary); /* Teal primary */
+   --sidebar-primary-foreground: 248 59% 10%; /* Dark text on primary */
+   --sidebar-accent: 248 59% 28%; /* Dark accent */
+   --sidebar-accent-foreground: 0 0% 98%; /* Light text on accent */
+   --sidebar-border: 248 59% 32%; /* Dark border */
+   --sidebar-ring: var(--primary); /* Teal ring */
+
+  /* Remove cursor light effect variables */
+  /* --cursor-x: 50vw; */
+  /* --cursor-y: 50vh; */
+  /* --cursor-light-size: 400px; */
+  /* --cursor-light-color: hsla(0, 0%, 0%, 0.06); */
 }
 
-/* Force light theme appearance */
+/* Define the gradient animation */
+@keyframes gradientAnimation {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+
+/* Force dark theme appearance */
 html {
-   color-scheme: light;
+   color-scheme: dark;
 }
 
 body {
   /* Changed default font for a more standard look */
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  /* Set base background color */
-  background-color: hsl(var(--background));
-  /* Apply cursor light effect */
-  background-image: radial-gradient(
-    circle at var(--cursor-x) var(--cursor-y),
-    var(--cursor-light-color) 0%,
-    transparent calc(var(--cursor-light-size) / 2) /* Fade out */
-  );
-  background-repeat: no-repeat;
-  background-attachment: fixed; /* Keep effect fixed during scroll */
+
+  /* Apply animated gradient background */
+  background: linear-gradient(135deg, hsl(var(--gradient-start)), hsl(var(--gradient-end)), hsl(var(--gradient-start)));
+  background-size: 200% 200%; /* Make background larger than viewport */
+  animation: gradientAnimation 15s ease infinite; /* Apply animation */
+
   /* Ensure body takes full height */
   min-height: 100vh;
-  /* Ensure text is readable */
+  /* Ensure text is readable based on theme variables */
   color: hsl(var(--foreground));
-  /* Smooth transition for potential future background changes */
-  transition: background-color 0.5s ease-in-out;
 }
 
 @layer base {
-  /* Variables define the light theme */
+  /* Variables define the dark theme */
   * {
     @apply border-border;
   }
@@ -94,16 +93,17 @@ body {
   }
 }
 
-/* Glassmorphism effect adjusted for light theme */
+/* Glassmorphism effect adjusted for dark theme */
 @layer utilities {
   .glassmorphic {
-    /* Lighter background, adjusted blur and shadow for light theme */
-    @apply bg-background/70 backdrop-blur-lg rounded-xl shadow-2xl border border-black/5; /* Very subtle border */
-    box-shadow: 0 8px 32px 0 hsla(0, 0%, 50%, 0.15); /* Softer shadow */
+    /* Darker background, adjusted blur and shadow for dark theme */
+    /* Using card color which is darker */
+    @apply bg-card/70 backdrop-blur-lg rounded-xl shadow-2xl border border-white/10; /* Subtle white border */
+    box-shadow: 0 8px 32px 0 hsla(0, 0%, 0%, 0.3); /* Darker shadow */
   }
 }
 
-/* Sparkle animation - use a contrasting color like dark gray */
+/* Sparkle animation - use a contrasting color like light gray/white */
 @layer utilities {
   @keyframes sparkle {
     0%, 100% { opacity: 0.8; transform: scale(1) translate(-50%, -50%) rotate(0deg); }
@@ -111,9 +111,8 @@ body {
   }
   .animate-sparkle {
     animation: sparkle 2s infinite ease-in-out; /* Slightly slower */
-     /* Use a color that contrasts well with light bg */
-     /* Using foreground which is dark */
-     color: hsl(var(--foreground) / 0.6); /* Slightly less opaque */
+     /* Use foreground color (light) */
+     color: hsl(var(--foreground) / 0.8); /* More opaque */
   }
 }
 
