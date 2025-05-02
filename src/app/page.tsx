@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import ImageSelector from '@/components/image-selector'; // Keep for camera functionality
+import ImageSelector from '@/components/image-selector'; // Re-enable ImageSelector for both buttons
 import LoadingPopup from '@/components/loading-popup';
 import ResultsPopup from '@/components/results-popup';
 import { Button } from '@/components/ui/button';
@@ -39,8 +39,9 @@ export default function Home() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null); // Ref for the hidden file input
   const [isDraggingOver, setIsDraggingOver] = useState<[boolean, boolean]>([false, false]); // State for drag-over effect
+  const audioRef = useRef<HTMLAudioElement | null>(null); // Ref for audio
 
-  // Callback for when an image is selected (either via click, drag, or camera)
+  // Callback for when an image is selected (either via click, drag, camera, or explicit upload button)
   const handleImageSelect = useCallback((dataUrl: string | null, fileName: string = "Image uploaded") => {
     if (!dataUrl) {
          console.warn("handleImageSelect called with null dataUrl");
@@ -67,7 +68,8 @@ export default function Home() {
             setErrorMessage(null);
             setAnalysisDifferences(null);
             setShowResultsPopup(false);
-            setIsLoading(false);
+            // No longer trigger loading here, wait for compare button
+            // setIsLoading(true);
 
             console.log("Image selected:", { index: firstEmptyIndex, name: fileName });
             if (newUrls[0] !== null && newUrls[1] !== null) {
@@ -89,11 +91,11 @@ export default function Home() {
 
 
    // Helper function to convert blob URL to data URI
-  async function blobUrlToDataUri(blobUrl: string): Promise<string | null> { // Added null return type
+  async function blobUrlToDataUri(blobUrl: string): Promise<string | null> {
      if (typeof fetch === 'undefined') {
          console.error("Fetch API is not available in this environment.");
          toast({ title: 'Environment Error', description: 'Fetch API not available. Cannot process camera image.', variant: 'destructive' });
-         return null; // Return null
+         return null;
      }
 
      if (!blobUrl.startsWith('blob:')) {
@@ -102,7 +104,7 @@ export default function Home() {
              return blobUrl;
          }
           toast({ title: 'Invalid URL', description: 'Expected a blob or data URL.', variant: 'destructive' });
-          return null; // Return null
+          return null;
      }
 
      console.log("Fetching blob URL:", blobUrl.substring(0, 50));
@@ -114,7 +116,7 @@ export default function Home() {
              try { errorBody = await response.text(); } catch { /* ignore */ }
              console.error(`Failed to fetch blob: ${response.status} ${response.statusText}. Body: ${errorBody.substring(0, 100)} (URL: ${blobUrl.substring(0, 50)})`);
              toast({ title: 'Fetch Error', description: `Failed to fetch blob: ${response.statusText}`, variant: 'destructive' });
-             return null; // Return null
+             return null;
          }
          const blob = await response.blob();
          console.log(`Blob fetched, size: ${blob.size}, type: ${blob.type}`);
@@ -140,7 +142,7 @@ export default function Home() {
                      console.warn("Could not revoke blob URL after error:", revokeError);
                  }
                   toast({ title: 'Read Error', description: 'Failed to read blob data.', variant: 'destructive' });
-                 reject(new Error("Failed to read blob data.")); // Keep reject here
+                 reject(new Error("Failed to read blob data."));
              };
              reader.readAsDataURL(blob);
          });
@@ -153,7 +155,7 @@ export default function Home() {
              console.warn("Could not revoke blob URL after fetch error:", revokeError);
          }
           toast({ title: 'Conversion Error', description: `Error converting camera image: ${error instanceof Error ? error.message : String(error)}`, variant: 'destructive' });
-         return null; // Return null
+         return null;
      }
   }
 
@@ -199,7 +201,9 @@ export default function Home() {
      setAnalysisDifferences(null);
      setShowResultsPopup(false);
      setErrorMessage(null);
-     setIsLoading(false);
+     setIsLoading(false); // Stop loading if an image is removed
+     audioRef.current?.pause(); // Stop audio if playing
+     if (audioRef.current) audioRef.current.currentTime = 0; // Reset audio time
      console.log(`Image removed from slot ${index + 1}`);
   };
 
@@ -212,15 +216,16 @@ export default function Home() {
           description: "Please select two images to compare.",
           variant: "destructive",
        });
-       setIsLoading(false);
+       // Do not set isLoading here, comparison didn't start
       return;
     }
 
-    setIsLoading(true);
+    setIsLoading(true); // Set loading state when comparison starts
     setErrorMessage(null);
     setAnalysisDifferences(null);
     setShowResultsPopup(false);
     console.log('Starting image comparison process...');
+    audioRef.current?.play(); // Play audio
 
     try {
       console.log('Ensuring data URIs...');
@@ -233,6 +238,8 @@ export default function Home() {
            setErrorMessage("One or both images could not be processed. Please try re-uploading or recapturing.");
            // Toast is likely already shown by ensureDataUri/blobUrlToDataUri
            setIsLoading(false);
+           audioRef.current?.pause(); // Stop audio on error
+           if (audioRef.current) audioRef.current.currentTime = 0;
           return;
       }
 
@@ -242,6 +249,8 @@ export default function Home() {
         image2DataUri: dataUri2,
       });
        console.log('AI comparison completed, result:', result);
+        audioRef.current?.pause(); // Stop audio on success
+        if (audioRef.current) audioRef.current.currentTime = 0; // Reset audio time
 
       if (!result || !Array.isArray(result.differences)) {
           console.error('Invalid result structure from AI:', result);
@@ -253,6 +262,7 @@ export default function Home() {
            });
            setShowResultsPopup(false);
            setAnalysisDifferences(null);
+           // Keep isLoading false as process finished (with error)
            setIsLoading(false);
           return;
       }
@@ -260,9 +270,12 @@ export default function Home() {
       setAnalysisDifferences(result.differences);
       setShowResultsPopup(true);
       console.log('Results popup set to show.');
+       setIsLoading(false); // Comparison finished, stop loading
 
     } catch (error) {
       console.error("Error during image comparison:", error);
+      audioRef.current?.pause(); // Stop audio on catch
+      if (audioRef.current) audioRef.current.currentTime = 0;
       let errorDesc = 'An unexpected error occurred during analysis.';
       if (error instanceof Error) {
         if (error.message.includes('SAFETY')) {
@@ -286,10 +299,9 @@ export default function Home() {
       });
       setShowResultsPopup(false);
       setAnalysisDifferences(null);
-    } finally {
-      console.log('Comparison process finished, setting isLoading to false');
-       setIsLoading(false);
+       setIsLoading(false); // Ensure loading is stopped on error
     }
+    // Removed finally block as isLoading is handled within try/catch
   };
 
   const handleReset = () => {
@@ -299,6 +311,8 @@ export default function Home() {
     setAnalysisDifferences(null);
     setShowResultsPopup(false);
     setErrorMessage(null);
+     audioRef.current?.pause(); // Stop audio on reset
+     if (audioRef.current) audioRef.current.currentTime = 0;
     if (fileInputRef.current) {
       fileInputRef.current.value = ""; // Reset file input
     }
@@ -347,20 +361,8 @@ export default function Home() {
             // Set the image in the specific dropped index if available, otherwise first empty
             const targetIndex = imageUrls[index] === null ? index : imageUrls.findIndex(url => url === null);
             if (targetIndex !== -1) {
-                setImageUrls(prevUrls => {
-                    const newUrls = [...prevUrls];
-                    newUrls[targetIndex] = dataUrl;
-                    return newUrls;
-                });
-                setImageFileNames(prevNames => {
-                    const newNames = [...prevNames];
-                    newNames[targetIndex] = file.name; // Use actual file name
-                    return newNames;
-                });
-                setErrorMessage(null);
-                setAnalysisDifferences(null);
-                setShowResultsPopup(false);
-                console.log("Image dropped and selected:", { index: targetIndex, name: file.name });
+                // Use handleImageSelect to manage state updates
+                handleImageSelect(dataUrl, file.name);
             } else {
                 toast({ title: "Slots Full", description: "Remove an image to add a new one.", variant: "destructive" });
             }
@@ -403,10 +405,28 @@ export default function Home() {
      // If the box already has an image, maybe prompt for removal or do nothing
   };
 
-
   // Determine button visibility
-  const showCompareButton = imageUrls[0] !== null && imageUrls[1] !== null && !isLoading && !analysisDifferences;
+  const showCompareButton = imageUrls[0] !== null && imageUrls[1] !== null && !isLoading && !showResultsPopup; // Only show if both images selected, not loading, and results not shown
   const showResetButton = (imageUrls.some(url => url !== null) || showResultsPopup) && !isLoading;
+
+
+    // Setup audio element on component mount
+    useEffect(() => {
+       // Use a free, short, looping sound effect for analysis
+       // Example source: Pixabay (ensure license compatibility)
+       const audioSrc = '/analysis-sound.mp3'; // Place this file in the public folder
+
+       audioRef.current = new Audio(audioSrc);
+       audioRef.current.loop = true; // Make the sound loop
+       audioRef.current.volume = 0.3; // Adjust volume (0.0 to 1.0)
+
+       return () => {
+         // Cleanup audio element on unmount
+         audioRef.current?.pause();
+         audioRef.current = null;
+       };
+    }, []);
+
 
   return (
      <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-8 relative z-10 overflow-hidden">
@@ -420,14 +440,12 @@ export default function Home() {
             id="image-upload"
         />
        <div className="glassmorphic p-6 md:p-10 w-full max-w-xl text-center relative animate-fade-slide-in">
-         {isLoading && !showResultsPopup ? (
+         {isLoading && !showResultsPopup ? ( // Show loading only when actively comparing and results aren't shown
              <LoadingPopup
                  imageUrl={imageUrls[0] || 'https://picsum.photos/200/200'} // Use a placeholder
                  message={"Magic is happening..."}
              />
-         ) : !isLoading && showResultsPopup && analysisDifferences !== null ? (
-             null // ResultsPopup is rendered outside this conditional block
-         ) : (
+         ) : ( // Render the main content if not loading OR if loading is finished (even if results popup is shown)
              <>
                  <h1 className="text-3xl md:text-4xl font-bold mb-6 text-foreground">
                    Spot the Difference AI ✨
@@ -449,6 +467,9 @@ export default function Home() {
                              onDragOver={(e) => handleDragOver(e, index)}
                              onDragLeave={(e) => handleDragLeave(e, index)}
                              onDrop={(e) => handleDrop(e, index)}
+                             aria-label={imageUrls[index] ? `Image ${index + 1}: ${imageFileNames[index] || ''}` : `Drop or click to upload Image ${index + 1}`}
+                             role="button"
+                             tabIndex={imageUrls[index] === null ? 0 : -1}
                          >
                              {imageUrls[index] ? (
                                  <>
@@ -493,10 +514,11 @@ export default function Home() {
                      ))}
                  </div>
 
-                 {/* Show ImageSelector for Camera option only */}
+                  {/* Restore ImageSelector with both buttons */}
                  <ImageSelector
-                     onImageSelect={handleImageSelect} // Pass the same handler
-                     showUploadOption={false} // Hide the upload button in ImageSelector
+                     onImageSelect={handleImageSelect}
+                     disabled={imageUrls[0] !== null && imageUrls[1] !== null} // Disable if both slots are full
+                     showUploadOption={true} // Explicitly show upload option
                  />
 
 
@@ -507,21 +529,23 @@ export default function Home() {
                  )}
 
                  <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center items-center w-full">
+                      {/* Compare Button */}
                      {showCompareButton && (
                          <Button
                              onClick={handleCompareImages}
                              className="w-full sm:w-auto bg-accent text-accent-foreground hover:bg-accent/90 shadow-md transition-transform hover:scale-105"
-                             disabled={isLoading}
+                             disabled={isLoading} // Disable while loading
                          >
                              <CheckSquare className="mr-2 h-4 w-4" /> Compare Images
                          </Button>
                      )}
+                      {/* Reset Button */}
                      {showResetButton && (
                          <Button
                              onClick={handleReset}
                              variant="outline"
                              className="w-full sm:w-auto border-border/70 hover:border-foreground transition-colors"
-                             disabled={isLoading}
+                             disabled={isLoading} // Disable while loading
                          >
                              <RefreshCw className="mr-2 h-4 w-4" /> Reset
                          </Button>
@@ -531,14 +555,15 @@ export default function Home() {
          )}
        </div>
 
+        {/* Results Popup - Render outside the main loading/content conditional */}
        {analysisDifferences !== null && imageUrls[0] && imageUrls[1] && (
            <ResultsPopup
                results={analysisDifferences}
-               onClose={handleReset}
+               onClose={handleReset} // Reset state when closing the popup
                image1Url={imageUrls[0]}
                image2Url={imageUrls[1]}
-               open={showResultsPopup}
-               setOpen={setShowResultsPopup}
+               open={showResultsPopup} // Controlled by state
+               setOpen={setShowResultsPopup} // Update state on open/close
            />
        )}
      </main>

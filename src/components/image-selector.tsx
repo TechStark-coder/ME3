@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 interface ImageSelectorProps {
   onImageSelect: (dataUrl: string, fileName?: string) => void;
   disabled?: boolean;
-  showUploadOption?: boolean; // New prop to control upload button visibility
+  showUploadOption?: boolean; // Control upload button visibility
 }
 
 // Helper function to read file as Data URL
@@ -129,9 +129,9 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect, disabled =
                             setIsVideoReady(true);
                         } else {
                             console.warn("Video dimensions not available after play started.");
-                            setIsVideoReady(false);
+                            setIsVideoReady(false); // Keep false if dimensions aren't ready
                         }
-                    }, 100);
+                    }, 100); // Slightly increased delay
                 }).catch(playErr => {
                     console.error("Video play failed:", playErr);
                      toast({
@@ -158,7 +158,7 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect, disabled =
                  console.log("Video can play.");
                  if (videoRef.current && videoRef.current.videoWidth > 0 && videoRef.current.videoHeight > 0) {
                     console.log(`Video dimensions confirmed on canplay: ${videoRef.current.videoWidth}x${videoRef.current.videoHeight}`);
-                    setIsVideoReady(true);
+                    setIsVideoReady(true); // Confirm video is ready here
                  }
              };
        } else {
@@ -193,11 +193,12 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect, disabled =
         description: description,
         duration: 9000,
       });
-      stopCameraTracks(stream);
+      stopCameraTracks(stream); // Use the existing stream state variable
       setStream(null);
       setIsVideoReady(false);
+      setIsCameraOpen(false); // Close camera UI on failure
     }
-  }, [disabled, isCameraOpen, hasCameraPermission, toast, stream, stopCameraTracks]);
+  }, [disabled, isCameraOpen, hasCameraPermission, toast, stream, stopCameraTracks]); // Added setIsCameraOpen dependency
 
 
   const handleStopCamera = useCallback(() => {
@@ -325,16 +326,17 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect, disabled =
     };
   }, [stream, stopCameraTracks]);
 
+  // Effect to manage video stream assignment and cleanup
   useEffect(() => {
-    if (videoRef.current && stream && videoRef.current.srcObject !== stream) {
-      console.log("Assigning new stream to video element.");
-      videoRef.current.srcObject = stream;
-      setIsVideoReady(false);
-    } else if (videoRef.current && !stream && videoRef.current.srcObject) {
-        console.log("Clearing video element srcObject because stream is null.");
-        videoRef.current.srcObject = null;
-        setIsVideoReady(false);
-    }
+      if (videoRef.current && stream && videoRef.current.srcObject !== stream) {
+          console.log("Assigning new stream to video element.");
+          videoRef.current.srcObject = stream;
+          setIsVideoReady(false); // Reset readiness on new stream
+      } else if (videoRef.current && !stream && videoRef.current.srcObject) {
+          console.log("Clearing video element srcObject because stream is null.");
+          videoRef.current.srcObject = null;
+          setIsVideoReady(false);
+      }
   }, [stream]);
 
 
@@ -342,12 +344,13 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect, disabled =
     <div className="flex flex-col items-center justify-center gap-4 w-full">
       {!isCameraOpen ? (
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center w-full">
-           {/* Conditionally render Upload button */}
+           {/* Conditionally render Upload button based on prop */}
           {showUploadOption && (
               <>
                 <Button onClick={handleUploadClick} variant="secondary" className="w-full sm:w-auto shadow-sm hover:shadow-md transition-shadow" disabled={disabled}>
                     <Upload className="mr-2 h-4 w-4" /> Upload Image
                 </Button>
+                {/* Keep the hidden input associated with the Upload button */}
                 <Input
                     type="file"
                     ref={fileInputRef}
@@ -359,6 +362,7 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect, disabled =
                 />
               </>
           )}
+          {/* Always show Camera button unless camera is open */}
           <Button onClick={startCamera} variant="outline" className="w-full sm:w-auto border-border/70 hover:border-foreground transition-colors" disabled={disabled}>
             <Camera className="mr-2 h-4 w-4" /> Use Camera
           </Button>
@@ -367,16 +371,19 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect, disabled =
         <div className="w-full flex flex-col items-center gap-4">
            <div className="relative w-full max-w-md border-2 border-border/50 rounded-lg overflow-hidden shadow-md bg-muted">
              <div className={`w-full aspect-video flex items-center justify-center`}>
+                  {/* Video element always in DOM for ref */}
                  <video
                     ref={videoRef}
+                     // Conditionally apply classes, ensure it's always in DOM for ref
                     className={cn(
                          'w-full h-full object-cover transition-opacity duration-300',
-                         stream && hasCameraPermission === true ? 'opacity-100' : 'opacity-0'
+                         stream && hasCameraPermission === true ? 'opacity-100' : 'opacity-0' // Fade in/out
                     )}
                     playsInline
                     muted
                  />
-                {hasCameraPermission === null && (
+                {/* Loading/Error states */}
+                {hasCameraPermission === null && !stream && (
                      <div className="absolute inset-0 flex items-center justify-center p-4">
                         <p className="text-muted-foreground animate-pulse text-center">Initializing camera...</p>
                      </div>
@@ -392,17 +399,24 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect, disabled =
                         </Alert>
                     </div>
                 )}
+                {/* Show placeholder/spinner while video loads */}
+                 {stream && hasCameraPermission === true && !isVideoReady && (
+                    <div className="absolute inset-0 flex items-center justify-center p-4 bg-muted/50">
+                        <p className="text-muted-foreground animate-pulse">Loading camera feed...</p>
+                    </div>
+                )}
             </div>
           </div>
 
           <canvas ref={canvasRef} className="hidden"></canvas>
 
+          {/* Capture button: Only enabled when permission is granted AND video is ready */}
           {hasCameraPermission === true && stream && (
               <Button
                 onClick={takePicture}
                 className="w-full max-w-xs bg-accent text-accent-foreground hover:bg-accent/90 shadow-md transition-transform hover:scale-105"
-                disabled={!isVideoReady}
-                 aria-disabled={!isVideoReady}
+                disabled={!isVideoReady || disabled} // Disable if video not ready or selector is disabled
+                 aria-disabled={!isVideoReady || disabled}
                  title={!isVideoReady ? "Waiting for camera feed..." : "Capture Image"}
               >
                 <Camera className="mr-2 h-4 w-4" />
@@ -410,6 +424,7 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect, disabled =
               </Button>
           )}
 
+          {/* Cancel button is always available when camera UI is open */}
           <Button onClick={handleStopCamera} variant="outline" className="w-full max-w-xs border-border/70 hover:border-foreground transition-colors">
              Cancel
           </Button>
