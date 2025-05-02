@@ -6,12 +6,10 @@ import ImageSelector from '@/components/image-selector';
 import LoadingPopup from '@/components/loading-popup';
 import ResultsPopup from '@/components/results-popup'; // Import the new component
 import { Button } from '@/components/ui/button';
-import { X, RefreshCw, CheckSquare } from 'lucide-react'; // Added CheckSquare for Compare button
+import { X, RefreshCw, CheckSquare } from 'lucide-react';
 import Image from 'next/image';
 import { compareImages } from '@/ai/flows/compare-images-flow'; // Import the AI flow
 import { useToast } from '@/hooks/use-toast';
-
-// Removed blobUrlToDataUri function - no longer needed
 
 export default function Home() {
   const { toast } = useToast();
@@ -20,16 +18,14 @@ export default function Home() {
   const [imageFileNames, setImageFileNames] = useState<(string | null)[]>([null, null]);
   // State to control the loading popup visibility
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  // State to hold the analysis results (list of missing objects)
-  const [analysisResult, setAnalysisResult] = useState<string[] | null>(null);
+  // State to hold the analysis results (list of differences) - Renamed from analysisResult
+  const [analysisDifferences, setAnalysisDifferences] = useState<string[] | null>(null);
   // State to control the results popup visibility
   const [showResults, setShowResults] = useState<boolean>(false);
-  // Removed currentObjectUrls state - no longer needed
   // State for error messages
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleImageSelect = useCallback((dataUrl: string, fileName: string = "Image uploaded") => {
-    // No need for added flag or firstEmptyIndex logic here, handled in setter
     setImageUrls((prevUrls) => {
       const firstEmptyIndex = prevUrls.findIndex(url => url === null);
       if (firstEmptyIndex !== -1) {
@@ -43,13 +39,11 @@ export default function Home() {
           return newNames;
         });
 
-        // If this is the second image, start loading/analysis immediately
-        if (prevUrls.filter(Boolean).length === 1 && newUrls.filter(Boolean).length === 2) {
-          setIsLoading(true); // Start loading animation
-          setErrorMessage(null); // Clear previous errors
-          setAnalysisResult(null);
-          setShowResults(false);
-        }
+        // Reset comparison related states if a new image is added
+        setIsLoading(false);
+        setErrorMessage(null);
+        setAnalysisDifferences(null);
+        setShowResults(false);
 
         return newUrls;
       }
@@ -60,70 +54,17 @@ export default function Home() {
         description: "Remove an image to add a new one.",
         variant: "destructive",
       });
-      // No need to revoke URL here as we are using data URIs
       return prevUrls;
     });
     // Clear error message when a new image is successfully selected
     if (imageUrls.findIndex(url => url === null) !== -1) {
        setErrorMessage(null);
     }
-  }, [toast, imageUrls]); // Added imageUrls dependency for checking slots
-
-  // Automatically trigger comparison when both images are set and loading starts
-  useEffect(() => {
-    if (isLoading && imageUrls[0] && imageUrls[1]) {
-      // Define the async function inside useEffect
-      const triggerComparison = async () => {
-        try {
-          // data URIs are already stored in imageUrls
-          const dataUri1 = imageUrls[0]!;
-          const dataUri2 = imageUrls[1]!;
-
-          // Call the AI flow
-          const result = await compareImages({
-            image1DataUri: dataUri1,
-            image2DataUri: dataUri2,
-          });
-
-          setAnalysisResult(result.missingObjects);
-          setShowResults(true);
-
-        } catch (error) {
-          console.error("Error comparing images:", error);
-          let errorDesc = 'An unexpected error occurred during analysis.';
-          if (error instanceof Error) {
-            errorDesc = error.message;
-          }
-          setErrorMessage(`Analysis Failed: ${errorDesc}`);
-          toast({
-            title: "Analysis Failed",
-            description: errorDesc,
-            variant: "destructive",
-          });
-          // Reset potentially inconsistent state on error
-          setShowResults(false);
-          setAnalysisResult(null);
-          // Reset images if analysis fails to allow retrying
-          setImageUrls([null, null]);
-          setImageFileNames([null, null]);
-        } finally {
-          setIsLoading(false); // Stop loading regardless of success/failure
-        }
-      };
-
-      // Call the async function
-      triggerComparison();
-    }
-     // Ensure loading stops if images are removed during loading
-    else if (isLoading && (!imageUrls[0] || !imageUrls[1])) {
-       setIsLoading(false);
-    }
-  }, [isLoading, imageUrls, toast]); // Add dependencies
+  }, [toast, imageUrls]); // Added imageUrls dependency
 
   const handleRemoveImage = (index: number) => {
      setImageUrls((prevUrls) => {
        const newUrls = [...prevUrls];
-       // No need to revoke URL
        newUrls[index] = null;
        return newUrls;
      });
@@ -132,28 +73,75 @@ export default function Home() {
         newNames[index] = null;
         return newNames;
     });
-     // No need to manage currentObjectUrls
-     setAnalysisResult(null); // Clear results if an image is removed
+     setAnalysisDifferences(null); // Clear results if an image is removed
      setShowResults(false);
      setErrorMessage(null); // Clear errors
      setIsLoading(false); // Stop loading if it was in progress
   };
 
-  // handleCompareImages is no longer needed as comparison triggers automatically
+  const handleCompareImages = async () => {
+    // Ensure both images are selected
+    if (!imageUrls[0] || !imageUrls[1]) {
+       setErrorMessage("Please select two images before comparing.");
+       toast({
+          title: "Missing Images",
+          description: "Please select two images to compare.",
+          variant: "destructive",
+       });
+      return;
+    }
+
+    setIsLoading(true); // Start loading animation
+    setErrorMessage(null); // Clear previous errors
+    setAnalysisDifferences(null);
+    setShowResults(false);
+
+    try {
+      // data URIs are already stored in imageUrls
+      const dataUri1 = imageUrls[0]!;
+      const dataUri2 = imageUrls[1]!;
+
+      // Call the AI flow
+      const result = await compareImages({
+        image1DataUri: dataUri1,
+        image2DataUri: dataUri2,
+      });
+
+      setAnalysisDifferences(result.differences); // Use the 'differences' field
+      setShowResults(true);
+
+    } catch (error) {
+      console.error("Error comparing images:", error);
+      let errorDesc = 'An unexpected error occurred during analysis.';
+      if (error instanceof Error) {
+        errorDesc = error.message;
+      }
+      setErrorMessage(`Analysis Failed: ${errorDesc}`);
+      toast({
+        title: "Analysis Failed",
+        description: errorDesc,
+        variant: "destructive",
+      });
+      // Reset potentially inconsistent state on error
+      setShowResults(false);
+      setAnalysisDifferences(null);
+      // Keep images loaded on error to allow retrying comparison
+    } finally {
+      setIsLoading(false); // Stop loading regardless of success/failure
+    }
+  };
+
 
   const handleReset = () => {
-    // No need to revoke URLs
     // Reset state
     setImageUrls([null, null]);
     setImageFileNames([null, null]);
-    // No need to reset currentObjectUrls
     setIsLoading(false);
-    setAnalysisResult(null);
+    setAnalysisDifferences(null);
     setShowResults(false);
     setErrorMessage(null);
   };
 
-  // Cleanup useEffect is no longer needed for revoking URLs
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-8 relative z-10">
@@ -161,10 +149,10 @@ export default function Home() {
         {isLoading ? (
           // Show loading popup only when isLoading is true
           <LoadingPopup imageUrl={imageUrls[0] || imageUrls[1] || '/placeholder.png'} message="Magic is happening..." />
-        ) : showResults && analysisResult ? (
+        ) : showResults && analysisDifferences ? ( // Check analysisDifferences
            // Show results popup
             <ResultsPopup
-                results={analysisResult}
+                results={analysisDifferences} // Pass differences
                 onClose={handleReset} // Reset when closing the results
                 image1Url={imageUrls[0]!}
                 image2Url={imageUrls[1]!}
@@ -229,7 +217,12 @@ export default function Home() {
 
             {/* Buttons container */}
             <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center items-center">
-                {/* Compare button is removed as comparison is automatic */}
+               {/* Show Compare button only when both images are selected and not loading/showing results */}
+                {imageUrls[0] && imageUrls[1] && !isLoading && !showResults && (
+                    <Button onClick={handleCompareImages} className="w-full sm:w-auto bg-accent text-accent-foreground hover:bg-accent/90">
+                        <CheckSquare className="mr-2 h-4 w-4" /> Compare Images
+                    </Button>
+                )}
 
                 {/* Show Reset button if any image is selected OR if results are shown */}
                 {(imageUrls.some(url => url !== null) || showResults) && !isLoading && (
