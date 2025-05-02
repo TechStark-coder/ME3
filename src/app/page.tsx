@@ -6,7 +6,7 @@ import ImageSelector from '@/components/image-selector';
 import LoadingPopup from '@/components/loading-popup';
 import ResultsPopup from '@/components/results-popup'; // Import the new component
 import { Button } from '@/components/ui/button';
-import { X, RefreshCw } from 'lucide-react';
+import { X, RefreshCw, CheckSquare } from 'lucide-react'; // Added CheckSquare for Compare button
 import Image from 'next/image';
 import { compareImages } from '@/ai/flows/compare-images-flow'; // Import the AI flow
 import { useToast } from '@/hooks/use-toast';
@@ -20,23 +20,29 @@ async function blobUrlToDataUri(url: string): Promise<string> {
 
   // If it's a blob URL, fetch and convert
   if (url.startsWith('blob:')) {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch blob: ${response.statusText}`);
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch blob: ${response.statusText}`);
+        }
+        const blob = await response.blob();
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+              if (typeof reader.result === 'string') {
+                  resolve(reader.result);
+              } else {
+                  reject(new Error('Failed to read blob as data URL.'));
+              }
+          };
+          reader.onerror = (error) => reject(error);
+          reader.readAsDataURL(blob);
+        });
+      } catch (error) {
+         console.error("Error fetching blob URL:", error);
+         // Provide a more specific error message
+         throw new Error(`Network error or issue fetching image data from URL. Please try uploading again.`);
       }
-      const blob = await response.blob();
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            if (typeof reader.result === 'string') {
-                resolve(reader.result);
-            } else {
-                reject(new Error('Failed to read blob as data URL.'));
-            }
-        };
-        reader.onerror = (error) => reject(error);
-        reader.readAsDataURL(blob);
-      });
   }
 
   // If it's neither, throw an error or handle as appropriate
@@ -105,15 +111,16 @@ export default function Home() {
     });
     setErrorMessage(null); // Clear previous errors
 
+    // REMOVED: Do not trigger comparison automatically
     // Check if both images are now selected after adding
-     setImageUrls(currentUrls => {
-        if (added && currentUrls[0] && currentUrls[1]) {
-            handleCompareImages(); // Trigger comparison immediately
-        }
-        return currentUrls; // Return the updated state
-    });
+    //  setImageUrls(currentUrls => {
+    //     if (added && currentUrls[0] && currentUrls[1]) {
+    //         handleCompareImages(); // Trigger comparison immediately
+    //     }
+    //     return currentUrls; // Return the updated state
+    // });
 
-  }, [currentObjectUrls, toast]); // Removed handleCompareImages from deps to avoid potential loops, added toast
+  }, [currentObjectUrls, toast]);
 
 
   const handleRemoveImage = (index: number) => {
@@ -145,8 +152,11 @@ export default function Home() {
     // Double check images are present before proceeding
     if (imageUrls.some(url => url === null)) {
       console.warn("Compare called but one or more images are missing.");
-      // Optionally show toast or error message if needed, but might be redundant
-      // if called automatically after second image selection.
+      toast({
+        title: "Missing Image",
+        description: "Please select two images before comparing.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -230,7 +240,7 @@ export default function Home() {
            // Show results popup
             <ResultsPopup
                 results={analysisResult}
-                onClose={() => setShowResults(false)}
+                onClose={handleReset} // Reset when closing the results
                 image1Url={imageUrls[0]!}
                 image2Url={imageUrls[1]!}
             />
@@ -291,25 +301,22 @@ export default function Home() {
               </p>
             )}
 
-             {/* No explicit compare button needed as it triggers automatically */}
-            {/* Remove or comment out the manual compare button */}
-            {/* {imageUrls[0] && imageUrls[1] && !isLoading && (
-              <div className="mt-6 flex gap-4 justify-center">
-                <Button onClick={handleCompareImages} className="bg-accent text-accent-foreground hover:bg-accent/90">
-                    Compare Images
-                </Button>
-                <Button onClick={handleReset} variant="outline">
-                    <RefreshCw className="mr-2 h-4 w-4" /> Start Over
-                </Button>
-              </div>
-            )} */}
+            {/* Buttons container */}
+            <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center items-center">
+                {/* Show Compare button only when both images are selected and not loading/showing results */}
+                {imageUrls[0] && imageUrls[1] && !isLoading && !showResults && (
+                    <Button onClick={handleCompareImages} className="w-full sm:w-auto bg-accent text-accent-foreground hover:bg-accent/90">
+                        <CheckSquare className="mr-2 h-4 w-4" /> Compare Images
+                    </Button>
+                )}
 
-            {/* Show Reset button if any image is selected */}
-            {imageUrls.some(url => url !== null) && !isLoading && !showResults && (
-                 <Button onClick={handleReset} variant="outline" className="mt-6">
-                    <RefreshCw className="mr-2 h-4 w-4" /> Reset
-                </Button>
-            )}
+                {/* Show Reset button if any image is selected and not loading/showing results */}
+                {imageUrls.some(url => url !== null) && !isLoading && !showResults && (
+                    <Button onClick={handleReset} variant="outline" className="w-full sm:w-auto">
+                        <RefreshCw className="mr-2 h-4 w-4" /> Reset
+                    </Button>
+                )}
+            </div>
 
           </>
         )}

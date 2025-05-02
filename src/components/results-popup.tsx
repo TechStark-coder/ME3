@@ -4,11 +4,11 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { X } from 'lucide-react';
+import { X, RefreshCw } from 'lucide-react'; // Import RefreshCw
 
 interface ResultsPopupProps {
   results: string[];
-  onClose: () => void;
+  onClose: () => void; // Should trigger the reset logic
   image1Url: string;
   image2Url: string;
 }
@@ -16,15 +16,16 @@ interface ResultsPopupProps {
 const ResultsPopup: React.FC<ResultsPopupProps> = ({ results, onClose, image1Url, image2Url }) => {
   return (
     <Card className="w-full max-w-lg mx-auto relative glassmorphic border-none shadow-xl">
-       <Button
+       {/* Keep X button for immediate dismissal (optional, can be removed if Start Over is enough) */}
+       {/* <Button
         variant="ghost"
         size="icon"
         className="absolute top-3 right-3 h-7 w-7 z-10 bg-background/50 hover:bg-background/80"
-        onClick={onClose}
+        onClick={onClose} // Or a different function if X should just hide temporarily
       >
         <X className="h-4 w-4" />
         <span className="sr-only">Close Results</span>
-      </Button>
+      </Button> */}
       <CardHeader className="text-center pb-4">
         <CardTitle className="text-2xl font-bold text-foreground">Analysis Complete</CardTitle>
         <CardDescription>Here's what changed between the images:</CardDescription>
@@ -70,7 +71,10 @@ const ResultsPopup: React.FC<ResultsPopupProps> = ({ results, onClose, image1Url
           <p className="text-muted-foreground text-left p-3 border border-border rounded-md bg-background/50">No missing objects identified.</p>
         )}
          <div className="mt-6 text-center">
-          <Button onClick={onClose} variant="outline">Close</Button>
+          {/* Changed button text and icon */}
+          <Button onClick={onClose} variant="outline">
+             <RefreshCw className="mr-2 h-4 w-4" /> Start Over
+          </Button>
         </div>
       </CardContent>
     </Card>
@@ -78,3 +82,4 @@ const ResultsPopup: React.FC<ResultsPopupProps> = ({ results, onClose, image1Url
 };
 
 export default ResultsPopup;
+
