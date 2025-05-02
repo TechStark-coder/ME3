@@ -25,95 +25,140 @@ export default function Home() {
   // State for error messages
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Helper function to convert potential blob URL to data URI (if needed, else returns original)
-  // This is kept simple and assumes input might be blob or data URI already
+
+   // Helper function to convert blob URL to data URI
+  async function blobUrlToDataUri(blobUrl: string): Promise<string> {
+      // Check if fetch is available
+     if (typeof fetch === 'undefined') {
+         console.error("Fetch API is not available in this environment.");
+         throw new Error("Fetch API not available. Cannot process camera image.");
+     }
+
+     // Added check for blob URL prefix just in case non-blob URLs are passed
+     if (!blobUrl.startsWith('blob:')) {
+         console.warn("Attempted to convert non-blob URL:", blobUrl.substring(0, 100));
+         // Return the original URL if it's not a blob URL, assuming it might be a data URI already
+         // Or throw an error if only blob URLs are expected here
+         // For now, let's assume it might be a data URI and return it.
+         // If this function *only* expects blob URLs, throwing an error might be better.
+         return blobUrl;
+         // throw new Error("Invalid URL: Expected a blob URL.");
+     }
+
+
+      console.log("Fetching blob URL:", blobUrl.substring(0, 50)); // Log start
+     try {
+         const response = await fetch(blobUrl);
+         console.log(`Fetch response status for ${blobUrl.substring(0, 50)}: ${response.status}`); // Log status
+         if (!response.ok) {
+             console.error(`Failed to fetch blob: ${response.statusText} (URL: ${blobUrl.substring(0, 50)})`); // Log error details
+            throw new Error(`Failed to fetch blob: ${response.statusText}`);
+         }
+         const blob = await response.blob();
+         console.log(`Blob fetched, size: ${blob.size}, type: ${blob.type}`); // Log blob details
+
+         // It's crucial to revoke the object URL *after* you're done with the blob
+         // However, ensure it's not needed elsewhere before revoking.
+         // Deferring revoke until after FileReader is done might be safer in complex scenarios,
+         // but often it's okay here if the blob is immediately processed.
+         try {
+             URL.revokeObjectURL(blobUrl);
+             console.log("Blob URL revoked:", blobUrl.substring(0, 50));
+         } catch (revokeError) {
+             console.warn("Could not revoke blob URL (might already be revoked or invalid):", revokeError);
+         }
+
+         return new Promise((resolve, reject) => {
+             const reader = new FileReader();
+             reader.onloadend = () => {
+                 console.log("FileReader finished reading."); // Log success
+                resolve(reader.result as string);
+             };
+             reader.onerror = (error) => {
+                 console.error("FileReader error:", error); // Log error
+                 reject(new Error("Failed to read blob data."));
+             };
+             reader.readAsDataURL(blob);
+         });
+     } catch (error) {
+          console.error(`Error during blob fetch/conversion for ${blobUrl.substring(0, 50)}:`, error); // Log detailed error
+          // Re-throw a more specific error or handle it
+          throw new Error(`Error converting camera image: ${error instanceof Error ? error.message : String(error)}`);
+     }
+  }
+
+
+  // Helper function to ensure a URL is a data URI
   const ensureDataUri = async (url: string | null): Promise<string | null> => {
     if (!url) return null;
     if (url.startsWith('data:')) {
       return url; // Already a data URI
     }
-    // Basic check if it might be a blob URL - you might need a more robust check
     if (url.startsWith('blob:')) {
       console.warn('Received blob URL, attempting conversion. Direct data URI is preferred.');
-      try {
-        // Use fetch within the client-side context where it's valid
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch blob: ${response.statusText}`);
-        }
-        const blob = await response.blob();
-        // Revoke the blob URL after fetching to free up resources
-        URL.revokeObjectURL(url);
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.onerror = reject;
-          reader.readAsDataURL(blob);
-        });
-      } catch (error) {
-        console.error("Error converting blob URL to data URI:", error);
-        toast({
-          title: "Image Conversion Error",
-          description: "Could not process the image from the camera capture.",
-          variant: "destructive",
-        });
-        return null; // Return null on conversion failure
-      }
+       try {
+           const dataUri = await blobUrlToDataUri(url);
+           return dataUri;
+       } catch (error) {
+           console.error("Error converting blob URL to data URI:", error);
+           toast({
+               title: "Image Conversion Error",
+               description: `Could not process the camera image. ${error instanceof Error ? error.message : String(error)}`,
+               variant: "destructive",
+           });
+           return null; // Return null on conversion failure
+       }
     }
-    // If it's neither, return null or handle as an error depending on expected inputs
+     // If it's neither, log a warning and return null or throw an error
     console.warn('Received URL is not a data URI or recognized blob URL:', url.substring(0, 100));
-    // Assuming it SHOULD be a data URI if not a blob, treat as error or invalid input
      toast({
           title: "Invalid Image Data",
-          description: "Received an unexpected image format.",
+          description: "Received an unexpected image format. Please re-upload or recapture.",
           variant: "destructive",
         });
     return null;
   };
 
 
-  const handleImageSelect = useCallback((dataUrl: string, fileName: string = "Image uploaded") => {
+ const handleImageSelect = useCallback((dataUrl: string, fileName: string = "Image uploaded") => {
     setImageUrls((prevUrls) => {
-      const firstEmptyIndex = prevUrls.findIndex(url => url === null);
-      if (firstEmptyIndex !== -1) {
-        const newUrls = [...prevUrls];
-        newUrls[firstEmptyIndex] = dataUrl;
+        const firstEmptyIndex = prevUrls.findIndex(url => url === null);
+        if (firstEmptyIndex !== -1) {
+            const newUrls = [...prevUrls];
+            newUrls[firstEmptyIndex] = dataUrl;
 
-        // Update file names
-        setImageFileNames(prevNames => {
-          const newNames = [...prevNames];
-          // Ensure a generic name if fileName is empty or undefined
-          newNames[firstEmptyIndex] = fileName || `Image ${firstEmptyIndex + 1}`;
-          return newNames;
-        });
+            setImageFileNames(prevNames => {
+                const newNames = [...prevNames];
+                 newNames[firstEmptyIndex] = fileName; // Use the actual file name or "captured_image.jpg"
+                return newNames;
+            });
 
-        // Reset comparison related states if a new image is added
-        setErrorMessage(null);
-        setAnalysisDifferences(null);
-        setShowResultsPopup(false); // Hide results popup if open
+            setErrorMessage(null); // Clear previous errors
+            setAnalysisDifferences(null); // Reset previous analysis
+            setShowResultsPopup(false); // Hide results popup
 
-        // Check if both images are now selected AFTER updating state
-        const bothSelected = newUrls[0] !== null && newUrls[1] !== null;
-        if (bothSelected) {
-          console.log("Both images selected, ready for comparison.");
+            const bothSelected = newUrls[0] !== null && newUrls[1] !== null;
+            // Remove automatic loading trigger from here
+            setIsLoading(false);
+
+            console.log("Image selected:", { index: firstEmptyIndex, name: fileName });
+             if (bothSelected) {
+                console.log("Both image slots are now filled. Ready for comparison.");
+             } else {
+                 console.log("One image slot filled.");
+             }
+
+            return newUrls;
         }
 
-        return newUrls;
-      }
-
-      // If both slots are filled, show a message
-      toast({
-        title: "Slots Full",
-        description: "Remove an image to add a new one.",
-        variant: "destructive",
-      });
-      return prevUrls;
+        toast({
+            title: "Slots Full",
+            description: "Remove an image to add a new one.",
+            variant: "destructive",
+        });
+        return prevUrls; // Return previous state if no slot was available
     });
-    // Clear error message when a new image is successfully selected
-    if (imageUrls.findIndex(url => url === null) !== -1) {
-       setErrorMessage(null);
-    }
-  }, [toast, imageUrls]); // Added imageUrls dependency
+ }, [toast]);
 
 
   const handleRemoveImage = (index: number) => {
@@ -131,8 +176,10 @@ export default function Home() {
      setShowResultsPopup(false); // Hide results popup
      setErrorMessage(null); // Clear errors
      setIsLoading(false); // Stop loading if it was in progress
+     console.log(`Image removed from slot ${index + 1}`);
   };
 
+  // Function to trigger comparison
   const handleCompareImages = async () => {
     // Ensure both images are selected
     if (!imageUrls[0] || !imageUrls[1]) {
@@ -142,38 +189,58 @@ export default function Home() {
           description: "Please select two images to compare.",
           variant: "destructive",
        });
+       setIsLoading(false); // Should already be false, but ensure it
       return;
     }
 
-    setIsLoading(true); // Start loading animation
+    setIsLoading(true); // Start loading FOR comparison
     setErrorMessage(null); // Clear previous errors
     setAnalysisDifferences(null);
     setShowResultsPopup(false); // Ensure results popup is hidden initially
+    console.log('Starting image comparison process...');
 
     try {
       // Ensure both URLs are valid data URIs before sending to the AI
-      // This ensures blob URLs are converted *before* sending to the server-side flow
+      console.log('Ensuring data URIs...');
       const dataUri1 = await ensureDataUri(imageUrls[0]);
       const dataUri2 = await ensureDataUri(imageUrls[1]);
+      console.log('Data URI check complete.');
+
 
       if (!dataUri1 || !dataUri2) {
-          throw new Error("One or both images could not be processed. Please try re-uploading.");
+          console.error("Data URI conversion/validation failed for one or both images.");
+           // Don't throw, use toast and set state
+           setErrorMessage("One or both images could not be processed. Please try re-uploading or recapturing.");
+           toast({
+                title: "Image Processing Error",
+                description: "One or both images could not be processed.",
+                variant: "destructive",
+            });
+           setIsLoading(false); // Stop loading on error
+          return; // Exit the function
       }
 
 
       // Call the AI flow
-      console.log('Calling AI flow...'); // Log before calling
+      console.log('Calling AI flow (compareImages)...'); // Log before calling
       const result = await compareImages({
         image1DataUri: dataUri1,
         image2DataUri: dataUri2,
       });
-       console.log('AI flow completed, result:', result); // Log after calling
+       console.log('AI comparison completed, result:', result); // Log after calling
+
+      if (!result || !Array.isArray(result.differences)) {
+          console.error('Invalid result structure from AI:', result);
+          throw new Error('Received an invalid response from the AI analysis.'); // Throw for unexpected structure
+      }
+
 
       setAnalysisDifferences(result.differences); // Use the 'differences' field
       setShowResultsPopup(true); // Show the results popup
+      console.log('Results popup set to show.');
 
     } catch (error) {
-      console.error("Error comparing images:", error);
+      console.error("Error during image comparison:", error);
       let errorDesc = 'An unexpected error occurred during analysis.';
       if (error instanceof Error) {
         // Check for specific Genkit/API errors if possible
@@ -183,7 +250,7 @@ export default function Home() {
              errorDesc = 'Invalid API Key. Please check your configuration.';
         }
          else {
-             errorDesc = error.message;
+             errorDesc = error.message; // Use the actual error message
          }
       }
       setErrorMessage(`Analysis Failed: ${errorDesc}`);
@@ -198,7 +265,7 @@ export default function Home() {
       setAnalysisDifferences(null);
       // Keep images loaded on error to allow retrying comparison
     } finally {
-      console.log('Setting isLoading to false'); // Log before setting loading false
+      console.log('Comparison process finished, setting isLoading to false'); // Log before setting loading false
       setIsLoading(false); // Stop loading regardless of success/failure
     }
   };
@@ -212,29 +279,38 @@ export default function Home() {
     setAnalysisDifferences(null);
     setShowResultsPopup(false); // Hide results popup on reset
     setErrorMessage(null);
+    console.log("Application state reset.");
   };
 
+
+  // Determine if the compare button should be shown
+  const showCompareButton = imageUrls[0] !== null && imageUrls[1] !== null && !isLoading && !showResultsPopup;
+  // Determine if the reset button should be shown
+  const showResetButton = (imageUrls.some(url => url !== null) || showResultsPopup) && !isLoading;
 
   return (
      <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-8 relative z-10 overflow-hidden">
        {/* Apply entrance animation here */}
        <div className="glassmorphic p-6 md:p-10 w-full max-w-xl text-center relative animate-fade-slide-in">
-         {isLoading ? (
-           // Show loading popup only when isLoading is true
-           <LoadingPopup imageUrl={imageUrls[0] || imageUrls[1] || '/placeholder.png'} message="Magic is happening..." />
+         {isLoading && !showResultsPopup ? ( // Show loading only when actively comparing and results aren't shown
+           <LoadingPopup
+                // Show the first image selected while loading, or placeholder if none yet
+                 imageUrl={imageUrls[0] || '/placeholder.png'} // Fallback needed if image 1 might not exist
+                 message={"Magic is happening..."}
+            />
          ) : (
-           // Show image selection UI when not loading
+           // Show image selection UI when not loading OR when results are ready
            <>
              <h1 className="text-3xl md:text-4xl font-bold mb-6 text-foreground">
-               Spot the Difference AI ✨ {/* Added sparkle emoji */}
+               Spot the Difference AI ✨
              </h1>
              <p className="text-muted-foreground mb-8 text-base md:text-lg">
                Select or capture two images. Our AI will find the changes!
              </p>
 
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8"> {/* Increased gap */}
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                {[0, 1].map((index) => (
-                 <div key={index} className="border-2 border-dashed border-border/50 rounded-lg p-4 flex flex-col items-center justify-center aspect-square relative bg-background/40 hover:border-accent transition-colors duration-300 group"> {/* Enhanced styling */}
+                 <div key={index} className="border-2 border-dashed border-border/50 rounded-lg p-4 flex flex-col items-center justify-center aspect-square relative bg-background/40 hover:border-accent transition-colors duration-300 group">
                    {imageUrls[index] ? (
                      <>
                        <Image
@@ -242,17 +318,18 @@ export default function Home() {
                          alt={`Selected image ${index + 1}`}
                          width={150}
                          height={150}
-                         className="object-contain rounded-md mb-3 shadow-md" {/* Added shadow */}
-                          data-ai-hint="abstract comparison"
+                         className="object-contain rounded-md mb-3 shadow-md"
+                         data-ai-hint="abstract comparison"
+                         onError={(e) => { console.error(`Error loading image ${index + 1}:`, e); handleRemoveImage(index); }}
                        />
-                        {/* Updated to show file name consistently */}
                         <p className="text-sm text-foreground truncate w-full px-2 font-medium" title={imageFileNames[index] || ''}>
-                             {imageFileNames[index] || `Image ${index + 1}`}
+                           {/* Show the actual file name or "captured_image.jpg" */}
+                           {imageFileNames[index] || `Image ${index + 1}`}
                         </p>
                        <Button
                          variant="ghost"
                          size="icon"
-                         className="absolute top-2 right-2 h-7 w-7 bg-destructive/80 text-destructive-foreground hover:bg-destructive rounded-full transition-all" // Rounded button
+                         className="absolute top-2 right-2 h-7 w-7 bg-destructive/80 text-destructive-foreground hover:bg-destructive rounded-full transition-all"
                          onClick={() => handleRemoveImage(index)}
                          aria-label={`Remove image ${index + 1}`}
                        >
@@ -260,7 +337,7 @@ export default function Home() {
                        </Button>
                      </>
                    ) : (
-                      <div className="text-center text-muted-foreground group-hover:text-accent transition-colors"> {/* Hover effect */}
+                      <div className="text-center text-muted-foreground group-hover:text-accent transition-colors">
                          <p className="font-semibold">Image {index + 1}</p>
                          <p className="text-xs mt-1">(Upload or Capture)</p>
                      </div>
@@ -276,29 +353,31 @@ export default function Home() {
 
 
              {errorMessage && (
-               <p className="mt-4 text-sm text-destructive dark:text-red-400 font-medium"> {/* Adjusted dark mode color */}
+               <p className="mt-4 text-sm text-destructive dark:text-red-400 font-medium">
                  {errorMessage}
                </p>
              )}
 
              {/* Buttons container - centered and spaced */}
-             <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center items-center w-full">
-                {/* Show Compare button only when both images are selected and not loading */}
-                 {imageUrls[0] && imageUrls[1] && !isLoading && (
+              <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center items-center w-full">
+                 {/* Show Compare button only when both images are selected and not currently loading a result */}
+                 {showCompareButton && (
                      <Button
                        onClick={handleCompareImages}
-                       className="w-full sm:w-auto bg-accent text-accent-foreground hover:bg-accent/90 shadow-md transition-transform hover:scale-105" // Added effects
+                       className="w-full sm:w-auto bg-accent text-accent-foreground hover:bg-accent/90 shadow-md transition-transform hover:scale-105"
+                       disabled={isLoading} // Should be false here based on showCompareButton logic, but good practice
                      >
                          <CheckSquare className="mr-2 h-4 w-4" /> Compare Images
                      </Button>
                  )}
 
-                 {/* Show Reset button if any image is selected OR if results are shown */}
-                 {(imageUrls.some(url => url !== null) || analysisDifferences !== null) && !isLoading && ( // Also show if results are present
+                 {/* Show Reset button if any image is selected OR if results are shown, but not during active loading */}
+                 {showResetButton && (
                      <Button
                        onClick={handleReset}
                        variant="outline"
-                       className="w-full sm:w-auto border-border/70 hover:border-foreground transition-colors" // Subtle styling
+                       className="w-full sm:w-auto border-border/70 hover:border-foreground transition-colors"
+                       disabled={isLoading} // Disable reset during comparison loading
                      >
                          <RefreshCw className="mr-2 h-4 w-4" /> Reset
                      </Button>
@@ -310,7 +389,7 @@ export default function Home() {
        </div>
          {/* Render ResultsPopup outside the main conditional block, controlled by state */}
          {/* Ensure results popup appears even if isLoading becomes true briefly after results */}
-         {(analysisDifferences !== null && imageUrls[0] && imageUrls[1]) && (
+          {showResultsPopup && analysisDifferences !== null && imageUrls[0] && imageUrls[1] && (
               <ResultsPopup
                  results={analysisDifferences || []} // Ensure results is always an array
                  onClose={handleReset} // Reset when closing the results
