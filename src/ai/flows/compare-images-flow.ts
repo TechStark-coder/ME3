@@ -39,20 +39,51 @@ export type CompareImagesOutput = z.infer<typeof CompareImagesOutputSchema>;
 
 // Define the exported wrapper function
 export async function compareImages(input: CompareImagesInput): Promise<CompareImagesOutput> {
-    console.log('Calling compareImagesFlow with input:', {
+    console.log('Calling compareImagesFlow with input (prefixes only):', {
         image1DataUri: input.image1DataUri.substring(0, 50) + '...', // Log only prefix
         image2DataUri: input.image2DataUri.substring(0, 50) + '...', // Log only prefix
     });
     try {
-      // Use a potentially more capable/slower model if needed, but start with prompt enhancement
-      // Example: const result = await compareImagesFlow(input, { model: 'googleai/gemini-pro' });
       const result = await compareImagesFlow(input);
-      console.log('compareImagesFlow result:', result);
+      console.log('compareImagesFlow successful result:', result);
       return result;
-    } catch (error) {
-      console.error("Error in compareImagesFlow:", error);
-      // Re-throw the error or handle it as needed
-       throw new Error(`AI comparison failed: ${error instanceof Error ? error.message : String(error)}`);
+    } catch (error: any) {
+       console.error("!!! Critical Error in compareImagesFlow !!!");
+       console.error("Raw Error Object:", error); // Log the raw error object
+
+        let errorMessage = "AI comparison failed.";
+
+        // Check for specific error types or messages
+        if (error instanceof Error) {
+            errorMessage += ` Details: ${error.message}`;
+             // Check for fetch failure specifically
+             if (error.message.includes('fetch failed')) {
+                errorMessage += " (Network/API Key Issue suspected. Verify API Key and network connectivity to Google APIs.)";
+                console.error("FETCH FAILED - Check GOOGLE_GENAI_API_KEY validity and network access to generativelanguage.googleapis.com.");
+             }
+             // Check for model not found errors
+             else if (error.message.includes('NOT_FOUND') || error.message.includes('Model not found')) {
+                 errorMessage += " (Model specified might not be available or valid for your API key/project.)";
+                 console.error("MODEL NOT FOUND - Ensure the model name in ai-instance.ts and the flow is correct and enabled for your project/key.");
+             }
+             // Check for safety settings issues
+             else if (error.message.includes('SAFETY')) {
+                 errorMessage += " (Content blocked due to safety settings.)";
+                 console.error("SAFETY BLOCK - The prompt or image content triggered safety filters.");
+             }
+              // Check for API key validity issues
+             else if (error.message.includes('API key not valid')) {
+                 errorMessage += " (Invalid API Key. Please check your GOOGLE_GENAI_API_KEY environment variable.)";
+                  console.error("INVALID API KEY - Verify the GOOGLE_GENAI_API_KEY in your .env.local file.");
+             }
+        } else {
+            errorMessage += ` Unexpected error type: ${String(error)}`;
+        }
+
+        // Log the final formatted error message before throwing
+        console.error("Formatted Error for re-throw:", errorMessage);
+      // Re-throw the enhanced error message
+       throw new Error(errorMessage);
     }
 }
 
@@ -121,9 +152,9 @@ const compareImagesFlow = ai.defineFlow<
     outputSchema: CompareImagesOutputSchema,
   },
   async (input) => {
-    // Call the prompt with the input
-    // Consider adding model configuration here if needed for accuracy:
-    // const { output } = await compareImagesPrompt(input, { model: 'googleai/gemini-pro' });
+    console.log("Executing compareImagesPrompt with default model...");
+    // Default model is defined in ai-instance.ts, typically gemini-2.0-flash
+    // Ensure the model used supports vision capabilities. Gemini Flash does.
     const { output } = await compareImagesPrompt(input);
 
      // Ensure output is not null or undefined before returning
@@ -136,6 +167,7 @@ const compareImagesFlow = ai.defineFlow<
      // Validate the output against the schema (Genkit usually does this, but good practice)
     try {
       CompareImagesOutputSchema.parse(output);
+      console.log("AI output validated successfully against schema.");
     } catch (validationError) {
       console.error('AI output validation failed:', validationError);
        // Handle validation error, e.g., return default
@@ -145,3 +177,4 @@ const compareImagesFlow = ai.defineFlow<
     return output; // Return the validated output
   }
 );
+
