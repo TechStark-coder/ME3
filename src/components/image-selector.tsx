@@ -1,14 +1,17 @@
 "use client";
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Upload, Camera } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // Added Alert imports
+
 
 interface ImageSelectorProps {
-  onImageSelect: (imageUrl: string) => void;
+  // Updated callback to accept an optional filename
+  onImageSelect: (imageUrl: string, fileName?: string) => void;
 }
 
 const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
@@ -17,13 +20,44 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null); // Track permission explicitly
   const { toast } = useToast();
+
+  // Request camera permission when 'Use Camera' is clicked or camera is opened
+  const getCameraPermission = async () => {
+      if (hasCameraPermission === true) return true; // Already have permission
+
+      try {
+        const mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        setHasCameraPermission(true);
+        setStream(mediaStream); // Set the stream state here
+        if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream;
+          videoRef.current.onloadedmetadata = () => {
+            videoRef.current?.play().catch(err => console.error("Video play failed:", err));
+          };
+        }
+        return true; // Indicate success
+      } catch (error) {
+        console.error('Error accessing camera:', error);
+        setHasCameraPermission(false);
+        toast({
+          variant: 'destructive',
+          title: 'Camera Access Denied',
+          description: 'Please enable camera permissions in your browser settings.',
+        });
+        stopCamera(); // Ensure cleanup if permission fails
+        return false; // Indicate failure
+      }
+    };
+
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && file.type.startsWith('image/')) {
       const imageUrl = URL.createObjectURL(file);
-      onImageSelect(imageUrl);
+      // Pass the file name to the callback
+      onImageSelect(imageUrl, file.name);
     } else if (file) {
         toast({
             title: "Invalid File Type",
@@ -43,26 +77,11 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
 
   const startCamera = async () => {
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      try {
-        const mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-        setStream(mediaStream);
-        setIsCameraOpen(true);
-        if (videoRef.current) {
-          videoRef.current.srcObject = mediaStream;
-          // Wait for metadata to load before playing to get correct dimensions
-          videoRef.current.onloadedmetadata = () => {
-             videoRef.current?.play();
-          }
+        setIsCameraOpen(true); // Set state to show video/capture UI
+        const permissionGranted = await getCameraPermission();
+        if (!permissionGranted) {
+            setIsCameraOpen(false); // Revert UI state if permission failed
         }
-      } catch (error) {
-        console.error("Error accessing camera:", error);
-        toast({
-          title: "Camera Error",
-          description: "Could not access the camera. Please check permissions.",
-          variant: "destructive",
-        });
-        setIsCameraOpen(false); // Ensure camera state is reset on error
-      }
     } else {
        toast({
          title: "Camera Not Supported",
@@ -79,12 +98,15 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
     }
     if(videoRef.current){
         videoRef.current.srcObject = null; // Clear the video source
+        const tracks = (videoRef.current.srcObject as MediaStream)?.getTracks();
+        tracks?.forEach(track => track.stop()); // Ensure tracks are stopped
     }
     setIsCameraOpen(false);
+    // Don't reset hasCameraPermission here, user might retry
   };
 
   const takePicture = () => {
-    if (videoRef.current && canvasRef.current) {
+    if (videoRef.current && canvasRef.current && stream) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       // Set canvas dimensions based on video intrinsic dimensions for correct aspect ratio
@@ -98,7 +120,8 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
         canvas.toBlob(blob => {
            if (blob) {
              const imageUrl = URL.createObjectURL(blob);
-             onImageSelect(imageUrl);
+             // Pass a generic message for captured images
+             onImageSelect(imageUrl, 'captured_image.jpg');
              stopCamera(); // Close camera after taking picture
            } else {
                toast({
@@ -109,24 +132,30 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
            }
         }, 'image/jpeg'); // Specify image format if needed
       }
+    } else {
+         toast({
+            title: "Capture Error",
+            description: "Camera stream not available or canvas error.",
+            variant: "destructive",
+         });
     }
   };
 
   // Clean up camera stream on component unmount
-  React.useEffect(() => {
+  useEffect(() => {
     return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
+      stopCamera(); // Use stopCamera for comprehensive cleanup
     };
-  }, [stream]);
-
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array ensures this runs only on unmount
 
   return (
+    // Updated to flex-col for vertical button arrangement
     <div className="flex flex-col items-center justify-center gap-4 w-full">
       {!isCameraOpen ? (
         <>
-          <Button onClick={handleUploadClick} variant="outline" className="w-full glassmorphic border-accent text-accent-foreground hover:bg-accent/90 hover:text-accent-foreground">
+          {/* Changed variant to secondary and removed glassmorphic for visibility */}
+          <Button onClick={handleUploadClick} variant="secondary" className="w-full">
             <Upload className="mr-2 h-4 w-4" /> Upload Image
           </Button>
           <Input
@@ -134,28 +163,63 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
             ref={fileInputRef}
             onChange={handleFileChange}
             accept="image/*"
-            className="hidden" // Hide the default input
+            className="hidden" // Keep default input hidden
             id="image-upload"
           />
           <Label htmlFor="image-upload" className="sr-only">Upload Image</Label>
 
-          <Button onClick={startCamera} variant="outline" className="w-full glassmorphic border-accent text-accent-foreground hover:bg-accent/90 hover:text-accent-foreground">
+          {/* Changed variant to secondary and removed glassmorphic for visibility */}
+          <Button onClick={startCamera} variant="secondary" className="w-full">
             <Camera className="mr-2 h-4 w-4" /> Use Camera
           </Button>
         </>
       ) : (
         <div className="w-full flex flex-col items-center gap-4">
-          {/* Video element initially hidden until stream is ready */}
-          <video ref={videoRef} className={`w-full max-w-md rounded-lg ${stream ? 'block' : 'hidden'}`} playsInline />
-          <canvas ref={canvasRef} className="hidden"></canvas>
-          <div className="flex flex-col gap-4 w-full max-w-xs justify-center">
-            <Button onClick={takePicture} className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
-              <Camera className="mr-2 h-4 w-4" /> Capture
-            </Button>
-            <Button onClick={stopCamera} variant="destructive" className="w-full">
-              Cancel
-            </Button>
+          {/* Video element always rendered, visibility controlled by CSS */}
+          <div className="relative w-full max-w-md">
+            <video
+                ref={videoRef}
+                className={`w-full aspect-video rounded-lg bg-muted ${stream && hasCameraPermission ? 'block' : 'hidden'}`} // Show only if stream and permission exist
+                playsInline // Essential for iOS
+                autoPlay // Autoplay when stream is ready
+                muted // Mute to allow autoplay without user interaction
+             />
+            {/* Alert shown when permission is denied */}
+            {hasCameraPermission === false && (
+                <Alert variant="destructive" className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 rounded-lg">
+                    <AlertTitle>Camera Access Required</AlertTitle>
+                    <AlertDescription className="text-center">
+                        Please allow camera access in your browser settings to use this feature.
+                        <Button onClick={getCameraPermission} variant="link" className="p-0 h-auto text-destructive dark:text-destructive">Retry</Button>
+                    </AlertDescription>
+                </Alert>
+            )}
+            {/* Placeholder/Loading state */}
+            {hasCameraPermission === null && !stream && (
+                 <div className="w-full aspect-video rounded-lg bg-muted flex items-center justify-center">
+                    <p className="text-muted-foreground">Initializing camera...</p>
+                 </div>
+            )}
           </div>
+
+          <canvas ref={canvasRef} className="hidden"></canvas>
+          {/* Buttons shown only if camera permission is granted */}
+          {hasCameraPermission === true && stream && (
+              <div className="flex flex-col gap-4 w-full max-w-xs justify-center">
+                <Button onClick={takePicture} className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
+                  <Camera className="mr-2 h-4 w-4" /> Capture
+                </Button>
+                <Button onClick={stopCamera} variant="outline" className="w-full">
+                  Cancel
+                </Button>
+              </div>
+          )}
+           {/* Show Cancel button even if permission is denied to allow user to go back */}
+          {hasCameraPermission !== true && (
+             <Button onClick={stopCamera} variant="outline" className="w-full max-w-xs">
+                 Cancel
+             </Button>
+          )}
         </div>
       )}
     </div>
