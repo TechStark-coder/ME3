@@ -440,7 +440,28 @@ export default function Home() {
 
        // Event listener for audio errors
        const handleError = (e: Event) => {
-           console.error("Audio Error:", e);
+           let errorMessage = "Unknown audio error";
+            if (audioRef.current?.error) {
+                switch (audioRef.current.error.code) {
+                    case MediaError.MEDIA_ERR_ABORTED:
+                        errorMessage = "Audio playback aborted.";
+                        break;
+                    case MediaError.MEDIA_ERR_NETWORK:
+                        errorMessage = "Network error caused audio download to fail.";
+                        break;
+                    case MediaError.MEDIA_ERR_DECODE:
+                        errorMessage = "Audio decoding error.";
+                        break;
+                    case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
+                        errorMessage = "Audio source format not supported.";
+                        break;
+                    default:
+                        errorMessage = `An unexpected audio error occurred (Code: ${audioRef.current.error.code})`;
+                }
+                 console.error(`Audio Error: ${errorMessage}`, e);
+            } else {
+                 console.error("Audio Error:", e);
+            }
            setIsAudioReady(false);
            // Optionally inform the user, but avoid being too intrusive
            // toast({
@@ -460,9 +481,12 @@ export default function Home() {
 
        return () => {
          // Cleanup audio element and listeners on unmount
-         audio.removeEventListener('canplaythrough', handleCanPlay);
-         audio.removeEventListener('error', handleError);
-         audio.pause();
+         if (audioRef.current) {
+             audioRef.current.removeEventListener('canplaythrough', handleCanPlay);
+             audioRef.current.removeEventListener('error', handleError);
+             audioRef.current.pause(); // Ensure audio is stopped
+             audioRef.current.src = ""; // Detach source
+         }
          audioRef.current = null;
          setIsAudioReady(false);
          console.log("Audio element cleaned up.");
@@ -611,4 +635,3 @@ export default function Home() {
      </main>
   );
 }
-
