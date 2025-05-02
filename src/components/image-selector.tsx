@@ -9,9 +9,27 @@ import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface ImageSelectorProps {
-  onImageSelect: (imageUrl: string, fileName?: string) => void;
-  disabled?: boolean; // Add disabled prop
+  // Update prop type to expect a data URI
+  onImageSelect: (dataUrl: string, fileName?: string) => void;
+  disabled?: boolean;
 }
+
+// Helper function to read file as Data URL
+const readFileAsDataURL = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+      } else {
+        reject(new Error('Failed to read file as Data URL.'));
+      }
+    };
+    reader.onerror = (error) => reject(error);
+    reader.readAsDataURL(file);
+  });
+};
+
 
 const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect, disabled = false }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -103,11 +121,20 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect, disabled =
   }, [stream]); // Removed videoRef.current from dependencies
 
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && file.type.startsWith('image/')) {
-      const imageUrl = URL.createObjectURL(file);
-      onImageSelect(imageUrl, file.name);
+      try {
+        const dataUrl = await readFileAsDataURL(file);
+        onImageSelect(dataUrl, file.name); // Pass data URL and file name
+      } catch (error) {
+        console.error("Error reading file:", error);
+        toast({
+          title: "Read Error",
+          description: "Could not read the selected file.",
+          variant: "destructive",
+        });
+      }
     } else if (file) {
         toast({
             title: "Invalid File Type",
@@ -115,6 +142,7 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect, disabled =
             variant: "destructive",
         });
     }
+    // Reset file input value to allow selecting the same file again
     if (fileInputRef.current) {
         fileInputRef.current.value = "";
     }
@@ -156,10 +184,10 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect, disabled =
       if (context) {
         try {
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            // Use toDataURL directly for simplicity, consider blob for performance if needed
+            // Get image as data URL directly
             const dataUrl = canvas.toDataURL('image/jpeg'); // Or 'image/png'
             if (dataUrl && dataUrl !== 'data:,') { // Check if canvas is not blank
-                 onImageSelect(dataUrl, 'captured_image.jpg');
+                 onImageSelect(dataUrl, 'captured_image.jpg'); // Pass data URL
                  stopCamera(); // Close camera after taking picture
             } else {
                  throw new Error("Canvas returned empty data URL.");

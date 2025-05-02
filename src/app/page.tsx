@@ -11,48 +11,11 @@ import Image from 'next/image';
 import { compareImages } from '@/ai/flows/compare-images-flow'; // Import the AI flow
 import { useToast } from '@/hooks/use-toast';
 
-// Helper function to convert blob URL or return data URI
-async function blobUrlToDataUri(url: string): Promise<string> {
-  // Check if it's already a data URI
-  if (url.startsWith('data:')) {
-    return url;
-  }
-
-  // If it's a blob URL, fetch and convert
-  if (url.startsWith('blob:')) {
-      try {
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch blob: ${response.statusText}`);
-        }
-        const blob = await response.blob();
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-              if (typeof reader.result === 'string') {
-                  resolve(reader.result);
-              } else {
-                  reject(new Error('Failed to read blob as data URL.'));
-              }
-          };
-          reader.onerror = (error) => reject(error);
-          reader.readAsDataURL(blob);
-        });
-      } catch (error) {
-         console.error("Error fetching blob URL:", error);
-         // Provide a more specific error message
-         throw new Error(`Network error or issue fetching image data from URL. Please try uploading again.`);
-      }
-  }
-
-  // If it's neither, throw an error or handle as appropriate
-  throw new Error(`Invalid URL type: ${url.substring(0, 30)}...`);
-}
-
+// Removed blobUrlToDataUri function - no longer needed
 
 export default function Home() {
   const { toast } = useToast();
-  // State for the two selected image URLs (blob or data URLs)
+  // State for the two selected image URLs (now directly data URIs)
   const [imageUrls, setImageUrls] = useState<(string | null)[]>([null, null]);
   const [imageFileNames, setImageFileNames] = useState<(string | null)[]>([null, null]);
   // State to control the loading popup visibility
@@ -61,68 +24,106 @@ export default function Home() {
   const [analysisResult, setAnalysisResult] = useState<string[] | null>(null);
   // State to control the results popup visibility
   const [showResults, setShowResults] = useState<boolean>(false);
-  // Store the object URLs to revoke them later
-  const [currentObjectUrls, setCurrentObjectUrls] = useState<(string | null)[]>([null, null]);
+  // Removed currentObjectUrls state - no longer needed
   // State for error messages
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-
-  const handleImageSelect = useCallback((imageUrl: string, fileName?: string) => {
-    let added = false;
-    let firstEmptyIndex = -1; // Keep track of the index where the image was added
-
+  const handleImageSelect = useCallback((dataUrl: string, fileName: string = "Image uploaded") => {
+    // No need for added flag or firstEmptyIndex logic here, handled in setter
     setImageUrls((prevUrls) => {
-      firstEmptyIndex = prevUrls.findIndex(url => url === null);
+      const firstEmptyIndex = prevUrls.findIndex(url => url === null);
       if (firstEmptyIndex !== -1) {
         const newUrls = [...prevUrls];
-        newUrls[firstEmptyIndex] = imageUrl;
-        added = true; // Mark as added
+        newUrls[firstEmptyIndex] = dataUrl;
 
-        // Revoke previous URL for this slot if necessary
-        if (currentObjectUrls[firstEmptyIndex] && currentObjectUrls[firstEmptyIndex]?.startsWith('blob:')) {
-          URL.revokeObjectURL(currentObjectUrls[firstEmptyIndex]!);
-        }
-        // Update current object URLs
-        setCurrentObjectUrls(prevObjUrls => {
-            const newObjUrls = [...prevObjUrls];
-            newObjUrls[firstEmptyIndex] = imageUrl.startsWith('blob:') ? imageUrl : null; // Only store blob URLs for revocation
-            return newObjUrls;
-        });
-
-         // Update file names
+        // Update file names
         setImageFileNames(prevNames => {
-            const newNames = [...prevNames];
-            newNames[firstEmptyIndex] = "Image uploaded"; // Set fixed name
-            return newNames;
+          const newNames = [...prevNames];
+          newNames[firstEmptyIndex] = fileName;
+          return newNames;
         });
 
+        // If this is the second image, start loading/analysis immediately
+        if (prevUrls.filter(Boolean).length === 1 && newUrls.filter(Boolean).length === 2) {
+          setIsLoading(true); // Start loading animation
+          setErrorMessage(null); // Clear previous errors
+          setAnalysisResult(null);
+          setShowResults(false);
+        }
 
         return newUrls;
       }
+
       // If both slots are filled, show a message
       toast({
         title: "Slots Full",
         description: "Remove an image to add a new one.",
         variant: "destructive",
       });
-      // Revoke the URL if it wasn't used and is a blob URL
-      if (imageUrl.startsWith('blob:')) {
-        URL.revokeObjectURL(imageUrl);
-      }
+      // No need to revoke URL here as we are using data URIs
       return prevUrls;
     });
-    setErrorMessage(null); // Clear previous errors
+    // Clear error message when a new image is successfully selected
+    if (imageUrls.findIndex(url => url === null) !== -1) {
+       setErrorMessage(null);
+    }
+  }, [toast, imageUrls]); // Added imageUrls dependency for checking slots
 
-  }, [currentObjectUrls, toast]);
+  // Automatically trigger comparison when both images are set and loading starts
+  useEffect(() => {
+    if (isLoading && imageUrls[0] && imageUrls[1]) {
+      // Define the async function inside useEffect
+      const triggerComparison = async () => {
+        try {
+          // data URIs are already stored in imageUrls
+          const dataUri1 = imageUrls[0]!;
+          const dataUri2 = imageUrls[1]!;
 
+          // Call the AI flow
+          const result = await compareImages({
+            image1DataUri: dataUri1,
+            image2DataUri: dataUri2,
+          });
+
+          setAnalysisResult(result.missingObjects);
+          setShowResults(true);
+
+        } catch (error) {
+          console.error("Error comparing images:", error);
+          let errorDesc = 'An unexpected error occurred during analysis.';
+          if (error instanceof Error) {
+            errorDesc = error.message;
+          }
+          setErrorMessage(`Analysis Failed: ${errorDesc}`);
+          toast({
+            title: "Analysis Failed",
+            description: errorDesc,
+            variant: "destructive",
+          });
+          // Reset potentially inconsistent state on error
+          setShowResults(false);
+          setAnalysisResult(null);
+          // Reset images if analysis fails to allow retrying
+          setImageUrls([null, null]);
+          setImageFileNames([null, null]);
+        } finally {
+          setIsLoading(false); // Stop loading regardless of success/failure
+        }
+      };
+
+      // Call the async function
+      triggerComparison();
+    }
+     // Ensure loading stops if images are removed during loading
+    else if (isLoading && (!imageUrls[0] || !imageUrls[1])) {
+       setIsLoading(false);
+    }
+  }, [isLoading, imageUrls, toast]); // Add dependencies
 
   const handleRemoveImage = (index: number) => {
      setImageUrls((prevUrls) => {
        const newUrls = [...prevUrls];
-       const urlToRemove = newUrls[index];
-       if (urlToRemove && urlToRemove.startsWith('blob:')) {
-         URL.revokeObjectURL(urlToRemove);
-       }
+       // No need to revoke URL
        newUrls[index] = null;
        return newUrls;
      });
@@ -131,97 +132,28 @@ export default function Home() {
         newNames[index] = null;
         return newNames;
     });
-     setCurrentObjectUrls(prevObjUrls => {
-        const newObjUrls = [...prevObjUrls];
-        newObjUrls[index] = null;
-        return newObjUrls;
-     });
+     // No need to manage currentObjectUrls
      setAnalysisResult(null); // Clear results if an image is removed
      setShowResults(false);
      setErrorMessage(null); // Clear errors
+     setIsLoading(false); // Stop loading if it was in progress
   };
 
-  const handleCompareImages = async () => {
-    // Double check images are present before proceeding
-    if (imageUrls.some(url => url === null)) {
-      console.warn("Compare called but one or more images are missing.");
-      toast({
-        title: "Missing Image",
-        description: "Please select two images before comparing.",
-        variant: "destructive",
-      });
-      return;
-    }
+  // handleCompareImages is no longer needed as comparison triggers automatically
 
-
-    setIsLoading(true);
-    setErrorMessage(null);
-    setAnalysisResult(null);
-    setShowResults(false);
-
-    try {
-      // Convert blob URLs to data URIs (or pass through existing data URIs)
-      const dataUri1 = await blobUrlToDataUri(imageUrls[0]!);
-      const dataUri2 = await blobUrlToDataUri(imageUrls[1]!);
-
-      // Call the AI flow
-      const result = await compareImages({
-        image1DataUri: dataUri1,
-        image2DataUri: dataUri2,
-      });
-
-      setAnalysisResult(result.missingObjects);
-      setShowResults(true);
-
-    } catch (error) {
-      console.error("Error comparing images:", error);
-      let errorDesc = 'An unexpected error occurred during analysis.';
-      if (error instanceof Error) {
-          errorDesc = error.message;
-      }
-      setErrorMessage(`Analysis Failed: ${errorDesc}`);
-      toast({
-        title: "Analysis Failed",
-        description: errorDesc,
-        variant: "destructive",
-      });
-      // Reset potentially inconsistent state on error
-      setShowResults(false);
-      setAnalysisResult(null);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-   const handleReset = () => {
-    // Revoke URLs
-    currentObjectUrls.forEach(url => {
-        if (url && url.startsWith('blob:')) {
-            URL.revokeObjectURL(url);
-        }
-    });
+  const handleReset = () => {
+    // No need to revoke URLs
     // Reset state
     setImageUrls([null, null]);
     setImageFileNames([null, null]);
-    setCurrentObjectUrls([null, null]);
+    // No need to reset currentObjectUrls
     setIsLoading(false);
     setAnalysisResult(null);
     setShowResults(false);
     setErrorMessage(null);
   };
 
-
-  // Cleanup object URLs on component unmount
-  useEffect(() => {
-    return () => {
-      currentObjectUrls.forEach(url => {
-        if (url && url.startsWith('blob:')) {
-          URL.revokeObjectURL(url);
-        }
-      });
-    };
-  }, [currentObjectUrls]);
-
+  // Cleanup useEffect is no longer needed for revoking URLs
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-8 relative z-10">
@@ -244,7 +176,7 @@ export default function Home() {
               Spot the Difference AI
             </h1>
             <p className="text-muted-foreground mb-8 text-base md:text-lg">
-              Upload or capture two images to find the differences.
+              Select two images to find the differences.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -261,13 +193,14 @@ export default function Home() {
                          data-ai-hint="abstract comparison"
                       />
                        <p className="text-sm text-foreground truncate w-full px-2 font-medium" title={imageFileNames[index] || ''}>
-                            {imageFileNames[index]}
+                            {imageFileNames[index] || `Image ${index + 1}`}
                        </p>
                       <Button
                         variant="ghost"
                         size="icon"
                         className="absolute top-2 right-2 h-6 w-6 bg-destructive/80 text-destructive-foreground hover:bg-destructive"
                         onClick={() => handleRemoveImage(index)}
+                        aria-label={`Remove image ${index + 1}`}
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -296,12 +229,7 @@ export default function Home() {
 
             {/* Buttons container */}
             <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center items-center">
-                {/* Show Compare button only when both images are selected and not loading/showing results */}
-                {imageUrls[0] && imageUrls[1] && !isLoading && !showResults && (
-                    <Button onClick={handleCompareImages} className="w-full sm:w-auto bg-accent text-accent-foreground hover:bg-accent/90">
-                        <CheckSquare className="mr-2 h-4 w-4" /> Compare Images
-                    </Button>
-                )}
+                {/* Compare button is removed as comparison is automatic */}
 
                 {/* Show Reset button if any image is selected OR if results are shown */}
                 {(imageUrls.some(url => url !== null) || showResults) && !isLoading && (
@@ -317,4 +245,3 @@ export default function Home() {
     </main>
   );
 }
-
