@@ -47,6 +47,12 @@
    --sidebar-accent-foreground: 0 0% 95%;
    --sidebar-border: 0 0% 20%;
    --sidebar-ring: var(--red-mid);
+
+   /* Variables for cursor light effect */
+   --cursor-x: 50vw; /* Default to center */
+   --cursor-y: 50vh;
+   --cursor-light-size: 400px; /* Size of the light circle */
+   --cursor-light-color: hsla(0, 0%, 100%, 0.06); /* Subtle white light */
 }
 
 /* Force dark theme appearance */
@@ -57,15 +63,22 @@ html {
 body {
   /* Changed default font for a more standard look */
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  /* Updated gradient background to red/black theme */
-  background: linear-gradient(135deg, hsl(var(--red-dark)) 0%, hsl(var(--black-true)) 50%, hsl(var(--red-mid) / 0.8) 100%);
-  background-size: 250% 250%; /* Increase size for smoother animation */
-  animation: gradient-animation 20s ease infinite alternate; /* Slower, smoother, alternate direction */
-  background-attachment: fixed; /* Keep gradient fixed during scroll */
+  /* Set base background color */
+  background-color: hsl(var(--background));
+  /* Apply cursor light effect */
+  background-image: radial-gradient(
+    circle at var(--cursor-x) var(--cursor-y),
+    var(--cursor-light-color) 0%,
+    transparent calc(var(--cursor-light-size) / 2) /* Fade out */
+  );
+  background-repeat: no-repeat;
+  background-attachment: fixed; /* Keep effect fixed during scroll */
   /* Ensure body takes full height */
   min-height: 100vh;
   /* Ensure text is readable */
   color: hsl(var(--foreground));
+  /* Smooth transition for potential future background changes */
+  transition: background-color 0.5s ease-in-out;
 }
 
 @layer base {
@@ -77,24 +90,18 @@ body {
   }
   body {
     @apply text-foreground;
-    /* Smooth transition for potential future background changes */
-    transition: background 0.5s ease-in-out;
   }
 }
 
-/* Gradient Animation */
-@keyframes gradient-animation {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
+/* REMOVED Gradient Animation */
+/* @keyframes gradient-animation { ... } */
 
-/* Glassmorphism effect adjusted for dark red/black theme */
+/* Glassmorphism effect adjusted for dark theme */
 @layer utilities {
   .glassmorphic {
-    /* Darker background, adjusted blur and shadow for the new theme */
+    /* Darker background, adjusted blur and shadow */
     @apply bg-card/70 backdrop-blur-lg rounded-xl shadow-2xl border border-white/10;
-    box-shadow: 0 8px 32px 0 hsla(var(--red-dark) / 0.3); /* Reddish shadow */
+    box-shadow: 0 8px 32px 0 hsla(0, 0%, 10%, 0.3); /* Darker shadow */
   }
   /* No need for .dark .glassmorphic as dark is default */
 }
@@ -107,7 +114,7 @@ body {
   }
   .animate-sparkle {
     animation: sparkle 2s infinite ease-in-out; /* Slightly slower */
-     /* Use a color that contrasts well with red/black */
+     /* Use a color that contrasts well with dark bg */
      /* Using foreground which is light gray/white */
      color: hsl(var(--foreground) / 0.8);
   }
