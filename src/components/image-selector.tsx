@@ -183,6 +183,11 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect, disabled =
       const context = canvas.getContext('2d');
       if (context) {
         try {
+            // Flip the image horizontally if it's from the front camera (optional)
+            // if (video.srcObject && video.srcObject.getVideoTracks()[0].getSettings().facingMode === 'user') {
+            //     context.translate(canvas.width, 0);
+            //     context.scale(-1, 1);
+            // }
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
             // Get image as data URL directly
             const dataUrl = canvas.toDataURL('image/jpeg'); // Or 'image/png'
@@ -228,7 +233,8 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect, disabled =
     <div className="flex flex-col items-center justify-center gap-4 w-full">
       {!isCameraOpen ? (
         <>
-          <Button onClick={handleUploadClick} variant="secondary" className="w-full" disabled={disabled}>
+           {/* Use slightly different variants for visual hierarchy */}
+          <Button onClick={handleUploadClick} variant="secondary" className="w-full shadow-sm hover:shadow-md transition-shadow" disabled={disabled}>
             <Upload className="mr-2 h-4 w-4" /> Upload Image
           </Button>
           <Input
@@ -240,16 +246,16 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect, disabled =
             id="image-upload"
             disabled={disabled}
           />
-          <Button onClick={startCamera} variant="secondary" className="w-full" disabled={disabled}>
+          <Button onClick={startCamera} variant="outline" className="w-full border-border/70 hover:border-foreground transition-colors" disabled={disabled}>
             <Camera className="mr-2 h-4 w-4" /> Use Camera
           </Button>
         </>
       ) : (
         <div className="w-full flex flex-col items-center gap-4">
-          <div className="relative w-full max-w-md">
+           <div className="relative w-full max-w-md border-2 border-border/50 rounded-lg overflow-hidden shadow-md"> {/* Added border/shadow */}
              {/* Video should ideally be rendered conditionally or styles adjusted
                  to avoid layout shifts and potential issues if srcObject is briefly null */}
-             <div className={`w-full aspect-video rounded-lg bg-muted overflow-hidden ${hasCameraPermission === false ? 'flex items-center justify-center' : ''}`}>
+             <div className={`w-full aspect-video bg-muted flex items-center justify-center`}> {/* Always flex container */}
                 <video
                     ref={videoRef}
                     className={`w-full h-full object-cover ${stream && hasCameraPermission === true ? 'block' : 'hidden'}`} // More reliable hiding
@@ -260,19 +266,19 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect, disabled =
 
                  {/* Alert shown when permission is denied */}
                 {hasCameraPermission === false && (
-                    <Alert variant="destructive" className="m-0 border-0 bg-transparent">
-                        <AlertTitle className="text-center">Camera Access Required</AlertTitle>
+                    <Alert variant="destructive" className="m-4 border-destructive/50 bg-destructive/10"> {/* Styled Alert */}
+                        <AlertTitle className="text-center font-semibold">Camera Access Required</AlertTitle>
                         <AlertDescription className="text-center mt-2">
-                            Please allow camera access in your browser settings.
-                            <Button onClick={getCameraPermission} variant="link" className="p-1 h-auto text-destructive dark:text-destructive font-bold">Retry Permission</Button>
+                            Please allow camera access in browser settings.
+                            <Button onClick={getCameraPermission} variant="link" className="p-1 h-auto text-destructive dark:text-red-400 font-bold block mx-auto mt-1">Retry Permission</Button>
                         </AlertDescription>
                     </Alert>
                 )}
 
                  {/* Placeholder/Loading state while checking permission/initializing */}
                 {hasCameraPermission === null && (
-                     <div className="w-full h-full flex items-center justify-center">
-                        <p className="text-muted-foreground animate-pulse">Initializing camera...</p>
+                     <div className="w-full h-full flex items-center justify-center p-4">
+                        <p className="text-muted-foreground animate-pulse text-center">Initializing camera...</p>
                      </div>
                 )}
             </div>
@@ -284,15 +290,15 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect, disabled =
           {hasCameraPermission === true && stream && (
               <Button
                 onClick={takePicture}
-                className="w-full max-w-xs bg-accent text-accent-foreground hover:bg-accent/90"
+                className="w-full max-w-xs bg-accent text-accent-foreground hover:bg-accent/90 shadow-md transition-transform hover:scale-105" // Accent button with effects
                 disabled={!stream || !videoRef.current?.videoWidth} // Disable until video has dimensions
               >
-                <Camera className="mr-2 h-4 w-4" /> Capture
+                <Camera className="mr-2 h-4 w-4" /> Capture Image
               </Button>
           )}
 
           {/* Always show Cancel button when camera UI is open */}
-          <Button onClick={stopCamera} variant="outline" className="w-full max-w-xs">
+          <Button onClick={stopCamera} variant="outline" className="w-full max-w-xs border-border/70 hover:border-foreground transition-colors">
              Cancel
           </Button>
 

@@ -12,7 +12,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, CheckCircle, XCircle } from 'lucide-react'; // Added icons
 import { cn } from '@/lib/utils';
 
 interface ResultsPopupProps {
@@ -31,68 +31,85 @@ const ResultsPopup: React.FC<ResultsPopupProps> = ({ results, onClose, image1Url
     onClose(); // Call the original reset logic
   };
 
+  const hasDifferences = results.length > 0;
+
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogContent className="glassmorphic max-w-lg">
+       {/* Apply glassmorphic effect and adjust max-width */}
+      <AlertDialogContent className="glassmorphic max-w-lg w-[90vw] md:w-full">
         <AlertDialogHeader>
-          <AlertDialogTitle className="text-center text-2xl font-bold text-foreground">
+          <AlertDialogTitle className="text-center text-2xl font-bold text-foreground flex items-center justify-center gap-2">
+             {/* Add icon based on results */}
+            {hasDifferences ? <CheckCircle className="text-green-500 h-6 w-6" /> : <XCircle className="text-orange-500 h-6 w-6" />}
             Analysis Complete
           </AlertDialogTitle>
-          <AlertDialogDescription className="text-center">
-            Here are the differences found between the images:
+           <AlertDialogDescription className="text-center text-muted-foreground">
+            {hasDifferences
+              ? "Here are the differences found between the images:"
+              : "Looks like the images are identical!"}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
-        {/* Image Comparison Section */}
-        <div className="grid grid-cols-2 gap-4 my-4">
-          <div className="relative aspect-square rounded-lg overflow-hidden border border-border">
-            <Image
-              src={image1Url}
-              alt="Image 1 (Reference)"
-              layout="fill"
-              objectFit="contain"
-              className="bg-muted/30"
-              data-ai-hint="original comparison"
-              onError={(e) => console.error("Error loading image 1 in results:", e)}
-            />
-            <p className="absolute bottom-1 left-1 right-1 bg-black/50 text-white text-xs px-2 py-0.5 rounded text-center">Image 1</p>
+        {/* Image Comparison Section - Increased gap and added labels */}
+        <div className="grid grid-cols-2 gap-4 my-6">
+          <div className="flex flex-col items-center gap-2">
+             <p className="text-sm font-medium text-muted-foreground">Image 1 (Reference)</p>
+            <div className="relative aspect-square rounded-lg overflow-hidden border-2 border-border w-full">
+              <Image
+                src={image1Url}
+                alt="Image 1 (Reference)"
+                layout="fill"
+                objectFit="contain"
+                className="bg-muted/20" // Lighter background
+                data-ai-hint="original comparison"
+                onError={(e) => console.error("Error loading image 1 in results:", e)}
+              />
+            </div>
           </div>
-          <div className="relative aspect-square rounded-lg overflow-hidden border border-border">
-            <Image
-              src={image2Url}
-              alt="Image 2 (Comparison)"
-              layout="fill"
-              objectFit="contain"
-              className="bg-muted/30"
-              data-ai-hint="modified comparison"
-              onError={(e) => console.error("Error loading image 2 in results:", e)}
-            />
-            <p className="absolute bottom-1 left-1 right-1 bg-black/50 text-white text-xs px-2 py-0.5 rounded text-center">Image 2</p>
+          <div className="flex flex-col items-center gap-2">
+             <p className="text-sm font-medium text-muted-foreground">Image 2 (Compared)</p>
+            <div className="relative aspect-square rounded-lg overflow-hidden border-2 border-border w-full">
+              <Image
+                src={image2Url}
+                alt="Image 2 (Comparison)"
+                layout="fill"
+                objectFit="contain"
+                className="bg-muted/20" // Lighter background
+                data-ai-hint="modified comparison"
+                onError={(e) => console.error("Error loading image 2 in results:", e)}
+              />
+            </div>
           </div>
         </div>
 
-        {/* Differences List Section */}
-        <h3 className="text-lg font-semibold mb-2 text-center text-foreground">Differences Found:</h3>
-        <ScrollArea className="h-40 w-full rounded-md border p-4 bg-background/80">
-          {results.length > 0 ? (
-            <ul className="list-disc list-inside space-y-1 text-sm text-foreground">
-              {results.map((item, index) => (
-                <li key={index} className="font-medium"> {/* Use font-medium or normal */}
-                  {item}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-muted-foreground text-center italic p-3">
-              No significant differences identified.
-            </p>
-          )}
-        </ScrollArea>
+        {/* Differences List Section - Only show if there are differences */}
+        {hasDifferences && (
+          <>
+            <h3 className="text-lg font-semibold mb-2 text-center text-foreground">Differences Found:</h3>
+             {/* Increased height, more padding */}
+            <ScrollArea className="h-48 w-full rounded-md border border-border/50 p-4 bg-background/70">
+              <ul className="space-y-2 text-sm text-foreground">
+                {results.map((item, index) => (
+                   // Added bullet point styling
+                  <li key={index} className="font-medium flex items-start gap-2">
+                     <span className="mt-1 text-accent">•</span> {/* Custom bullet */}
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </ScrollArea>
+          </>
+        )}
 
-        <AlertDialogFooter className="mt-4">
+        {/* Footer with improved button styling */}
+        <AlertDialogFooter className="mt-6 sm:justify-center">
            {/* Use AlertDialogAction which closes the dialog by default, override onClick */}
            <AlertDialogAction asChild>
-             <Button onClick={handleClose} variant="outline">
+             <Button
+               onClick={handleClose}
+               variant="outline"
+               className="w-full sm:w-auto border-foreground/30 hover:bg-accent/10 hover:border-accent transition-all" // Enhanced outline style
+             >
                <RefreshCw className="mr-2 h-4 w-4" /> Start Over
              </Button>
            </AlertDialogAction>

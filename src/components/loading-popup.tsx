@@ -15,10 +15,10 @@ const LoadingPopup: React.FC<LoadingPopupProps> = ({ imageUrl, message }) => {
 
   return (
     // Centered container for the popup content
-    <div className="flex flex-col items-center justify-center p-6 min-h-[300px]"> {/* Added min-height */}
-      <div className="relative w-48 h-48 md:w-64 md:h-64">
+    <div className="flex flex-col items-center justify-center p-6 min-h-[350px]"> {/* Slightly increased min-height */}
+      <div className="relative w-52 h-52 md:w-64 md:h-64"> {/* Slightly larger image container */}
         {/* Circular image container */}
-        <div className="absolute inset-0 rounded-full overflow-hidden border-4 border-primary shadow-lg animate-pulse bg-muted"> {/* Added bg-muted for placeholder */}
+        <div className="absolute inset-0 rounded-full overflow-hidden border-4 border-primary/80 shadow-xl animate-pulse bg-muted/50"> {/* Enhanced border and shadow */}
           <Image
             src={displayImageUrl} // Use the display URL
             alt="Analyzing image..." // Updated alt text
@@ -40,20 +40,20 @@ const LoadingPopup: React.FC<LoadingPopupProps> = ({ imageUrl, message }) => {
             key={i}
             className={cn(
               'absolute text-accent animate-sparkle',
-              'w-6 h-6 md:w-8 md:h-8' // Adjust size as needed
+              'w-5 h-5 md:w-7 md:h-7' // Adjusted size slightly
             )}
             style={{
               // Position sparkles around the circle
-              top: `calc(50% + ${Math.sin((i / 8) * 2 * Math.PI) * 55}%)`, // Adjusted radius factor
-              left: `calc(50% + ${Math.cos((i / 8) * 2 * Math.PI) * 55}%)`, // Adjusted radius factor
+              top: `calc(50% + ${Math.sin((i / 8) * 2 * Math.PI) * 60}%)`, // Increased radius factor
+              left: `calc(50% + ${Math.cos((i / 8) * 2 * Math.PI) * 60}%)`, // Increased radius factor
               transform: 'translate(-50%, -50%)',
-              animationDelay: `${i * 0.15}s`, // Stagger animation
+              animationDelay: `${i * 0.2}s`, // Stagger animation more
             }}
             strokeWidth={1.5}
           />
         ))}
       </div>
-      <p className="mt-6 text-lg md:text-xl font-semibold text-foreground animate-pulse">
+      <p className="mt-8 text-lg md:text-xl font-semibold text-foreground animate-pulse tracking-wide"> {/* Added tracking */}
         {message}
       </p>
     </div>
