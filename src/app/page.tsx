@@ -41,6 +41,7 @@ export default function Home() {
   const [isDraggingOver, setIsDraggingOver] = useState<[boolean, boolean]>([false, false]); // State for drag-over effect
   const audioRef = useRef<HTMLAudioElement | null>(null); // Ref for audio
   const [isAudioReady, setIsAudioReady] = useState(false); // State to track audio readiness
+  const audioSrc = '/analysis-sound.mp3'; // Define audio source path
 
   // Callback for when an image is selected (either via click, drag, camera, or explicit upload button)
   const handleImageSelect = useCallback((dataUrl: string | null, fileName: string = "Image uploaded") => {
@@ -229,8 +230,12 @@ export default function Home() {
     setShowResultsPopup(false);
     console.log('Starting image comparison process...');
     if (isAudioReady && audioRef.current) {
+        console.log('Attempting to play audio...');
         audioRef.current.play().catch(err => console.warn("Audio play failed:", err)); // Play audio, catch errors
+    } else {
+        console.log('Audio not ready or ref not available, skipping play.');
     }
+
 
     try {
       console.log('Ensuring data URIs...');
@@ -426,7 +431,8 @@ export default function Home() {
     // Setup audio element on component mount
     useEffect(() => {
        // IMPORTANT: Make sure the 'analysis-sound.mp3' file exists in the public folder
-       const audioSrc = '/analysis-sound.mp3';
+       // and that the browser supports its format (MP3 is widely supported)
+       console.log(`Attempting to load audio source: ${audioSrc}`);
 
        const audio = new Audio(audioSrc);
        audio.loop = true;
@@ -447,28 +453,33 @@ export default function Home() {
                         errorMessage = "Audio playback aborted.";
                         break;
                     case MediaError.MEDIA_ERR_NETWORK:
-                        errorMessage = "Network error caused audio download to fail.";
+                        errorMessage = "Network error caused audio download to fail. Check network and file path.";
                         break;
                     case MediaError.MEDIA_ERR_DECODE:
-                        errorMessage = "Audio decoding error.";
+                        errorMessage = "Audio decoding error. The file might be corrupted or in an unsupported codec.";
                         break;
                     case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
-                        errorMessage = "Audio source format not supported.";
+                        errorMessage = `Audio source format not supported by this browser. Path: ${audioSrc}. Ensure it's a supported format like MP3.`;
                         break;
                     default:
                         errorMessage = `An unexpected audio error occurred (Code: ${audioRef.current.error.code})`;
                 }
                  console.error(`Audio Error: ${errorMessage}`, e);
+                 toast({ // Show a toast for critical errors like unsupported format
+                   title: 'Audio Playback Warning',
+                   description: errorMessage.includes('format not supported') ? errorMessage : 'Could not load analysis sound.',
+                   variant: 'destructive', // More prominent for critical issues
+                   duration: 7000
+                 });
             } else {
-                 console.error("Audio Error:", e);
+                 console.error("Audio Error (no error code available):", e);
+                 toast({
+                    title: 'Audio Warning',
+                    description: 'An unknown error occurred loading the analysis sound.',
+                    variant: 'default',
+                  });
             }
            setIsAudioReady(false);
-           // Optionally inform the user, but avoid being too intrusive
-           // toast({
-           //   title: 'Audio Warning',
-           //   description: 'Could not load analysis sound effect.',
-           //   variant: 'default', // Use default, not destructive
-           // });
        };
 
        audio.addEventListener('canplaythrough', handleCanPlay);
@@ -477,11 +488,13 @@ export default function Home() {
        audioRef.current = audio;
 
        // Attempt to load the audio
-       audio.load();
+       console.log('Calling audio.load()...');
+       audio.load(); // Explicitly call load
 
        return () => {
          // Cleanup audio element and listeners on unmount
          if (audioRef.current) {
+             console.log("Cleaning up audio element.");
              audioRef.current.removeEventListener('canplaythrough', handleCanPlay);
              audioRef.current.removeEventListener('error', handleError);
              audioRef.current.pause(); // Ensure audio is stopped
@@ -489,9 +502,9 @@ export default function Home() {
          }
          audioRef.current = null;
          setIsAudioReady(false);
-         console.log("Audio element cleaned up.");
+         console.log("Audio element cleanup complete.");
        };
-    }, []);
+    }, [audioSrc]); // Dependency on audioSrc
 
 
   return (
@@ -635,3 +648,4 @@ export default function Home() {
      </main>
   );
 }
+
