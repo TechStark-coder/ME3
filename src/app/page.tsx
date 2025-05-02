@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import ImageSelector from '@/components/image-selector';
 import LoadingPopup from '@/components/loading-popup';
-import ResultsPopup from '@/components/results-popup'; // Import the new component
+import ResultsPopup from '@/components/results-popup'; // Import the updated component
 import { Button } from '@/components/ui/button';
 import { X, RefreshCw, CheckSquare } from 'lucide-react';
 import Image from 'next/image';
@@ -18,10 +18,10 @@ export default function Home() {
   const [imageFileNames, setImageFileNames] = useState<(string | null)[]>([null, null]);
   // State to control the loading popup visibility
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  // State to hold the analysis results (list of differences) - Renamed from analysisResult
+  // State to hold the analysis results (list of differences)
   const [analysisDifferences, setAnalysisDifferences] = useState<string[] | null>(null);
-  // State to control the results popup visibility
-  const [showResults, setShowResults] = useState<boolean>(false);
+  // State to control the results popup visibility using AlertDialog's state
+  const [showResultsPopup, setShowResultsPopup] = useState<boolean>(false);
   // State for error messages
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -39,11 +39,12 @@ export default function Home() {
           return newNames;
         });
 
+        // Don't immediately start loading, wait for compare button
         // Reset comparison related states if a new image is added
         setIsLoading(false);
         setErrorMessage(null);
         setAnalysisDifferences(null);
-        setShowResults(false);
+        setShowResultsPopup(false); // Hide results popup if open
 
         return newUrls;
       }
@@ -74,7 +75,7 @@ export default function Home() {
         return newNames;
     });
      setAnalysisDifferences(null); // Clear results if an image is removed
-     setShowResults(false);
+     setShowResultsPopup(false); // Hide results popup
      setErrorMessage(null); // Clear errors
      setIsLoading(false); // Stop loading if it was in progress
   };
@@ -94,7 +95,7 @@ export default function Home() {
     setIsLoading(true); // Start loading animation
     setErrorMessage(null); // Clear previous errors
     setAnalysisDifferences(null);
-    setShowResults(false);
+    setShowResultsPopup(false); // Ensure results popup is hidden initially
 
     try {
       // data URIs are already stored in imageUrls
@@ -108,7 +109,7 @@ export default function Home() {
       });
 
       setAnalysisDifferences(result.differences); // Use the 'differences' field
-      setShowResults(true);
+      setShowResultsPopup(true); // Show the results popup
 
     } catch (error) {
       console.error("Error comparing images:", error);
@@ -123,7 +124,7 @@ export default function Home() {
         variant: "destructive",
       });
       // Reset potentially inconsistent state on error
-      setShowResults(false);
+      setShowResultsPopup(false);
       setAnalysisDifferences(null);
       // Keep images loaded on error to allow retrying comparison
     } finally {
@@ -138,7 +139,7 @@ export default function Home() {
     setImageFileNames([null, null]);
     setIsLoading(false);
     setAnalysisDifferences(null);
-    setShowResults(false);
+    setShowResultsPopup(false); // Hide results popup on reset
     setErrorMessage(null);
   };
 
@@ -149,16 +150,8 @@ export default function Home() {
         {isLoading ? (
           // Show loading popup only when isLoading is true
           <LoadingPopup imageUrl={imageUrls[0] || imageUrls[1] || '/placeholder.png'} message="Magic is happening..." />
-        ) : showResults && analysisDifferences ? ( // Check analysisDifferences
-           // Show results popup
-            <ResultsPopup
-                results={analysisDifferences} // Pass differences
-                onClose={handleReset} // Reset when closing the results
-                image1Url={imageUrls[0]!}
-                image2Url={imageUrls[1]!}
-            />
         ) : (
-          // Show image selection UI
+          // Show image selection UI when not loading
           <>
             <h1 className="text-3xl md:text-4xl font-bold mb-6 text-foreground">
               Spot the Difference AI
@@ -217,15 +210,15 @@ export default function Home() {
 
             {/* Buttons container */}
             <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center items-center">
-               {/* Show Compare button only when both images are selected and not loading/showing results */}
-                {imageUrls[0] && imageUrls[1] && !isLoading && !showResults && (
+               {/* Show Compare button only when both images are selected and not loading */}
+                {imageUrls[0] && imageUrls[1] && !isLoading && (
                     <Button onClick={handleCompareImages} className="w-full sm:w-auto bg-accent text-accent-foreground hover:bg-accent/90">
                         <CheckSquare className="mr-2 h-4 w-4" /> Compare Images
                     </Button>
                 )}
 
                 {/* Show Reset button if any image is selected OR if results are shown */}
-                {(imageUrls.some(url => url !== null) || showResults) && !isLoading && (
+                {(imageUrls.some(url => url !== null)) && !isLoading && (
                     <Button onClick={handleReset} variant="outline" className="w-full sm:w-auto">
                         <RefreshCw className="mr-2 h-4 w-4" /> Reset
                     </Button>
@@ -235,6 +228,17 @@ export default function Home() {
           </>
         )}
       </div>
+        {/* Render ResultsPopup outside the main conditional block, controlled by state */}
+        {analysisDifferences && imageUrls[0] && imageUrls[1] && (
+             <ResultsPopup
+                results={analysisDifferences}
+                onClose={handleReset} // Reset when closing the results
+                image1Url={imageUrls[0]!}
+                image2Url={imageUrls[1]!}
+                open={showResultsPopup}
+                setOpen={setShowResultsPopup}
+            />
+        )}
     </main>
   );
 }
