@@ -3,103 +3,82 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Define new red/black colors */
+:root {
+  --red-dark: 0 100% 15%; /* Darker Red */
+  --red-mid: 0 90% 35%; /* Mid Red */
+  --black-true: 0 0% 0%; /* True Black */
+  --gray-dark: 0 0% 10%; /* Very Dark Gray */
+  --gray-light: 0 0% 80%; /* Light Gray for text contrast */
+
+  /* Override existing theme variables for red/black theme */
+  --background: 0 0% 4%; /* Very dark background */
+  --foreground: 0 0% 95%; /* Light foreground for contrast */
+  --card: 0 0% 8%; /* Dark card background */
+  --card-foreground: 0 0% 95%;
+  --popover: 0 0% 8%; /* Dark popover */
+  --popover-foreground: 0 0% 95%;
+  --primary: var(--red-mid); /* Use mid red as primary */
+  --primary-foreground: 0 0% 98%; /* White/Light text on red */
+  --secondary: var(--red-dark); /* Use dark red as secondary */
+  --secondary-foreground: 0 0% 98%; /* White/Light text on dark red */
+  --muted: 0 0% 15%; /* Dark muted background */
+  --muted-foreground: 0 0% 60%; /* Lighter muted text */
+  --accent: var(--red-mid); /* Use mid red as accent */
+  --accent-foreground: 0 0% 98%; /* White/Light text on accent */
+  --destructive: 0 70% 50%; /* Keep a slightly different red for destructive actions */
+  --destructive-foreground: 0 0% 98%;
+  --border: 0 0% 20%; /* Darker border */
+  --input: 0 0% 18%; /* Dark input background */
+  --ring: var(--red-mid); /* Use mid red for ring */
+  --chart-1: var(--red-mid);
+  --chart-2: 0 80% 45%; /* Variation of red */
+  --chart-3: 0 70% 30%; /* Darker variation */
+  --chart-4: 0 100% 60%; /* Brighter variation */
+  --chart-5: 0 60% 25%; /* Even darker */
+  --radius: 0.5rem;
+
+  /* Sidebar (assuming dark theme base) */
+   --sidebar-background: 0 0% 8%;
+   --sidebar-foreground: 0 0% 95%;
+   --sidebar-primary: var(--red-mid);
+   --sidebar-primary-foreground: 0 0% 98%;
+   --sidebar-accent: 0 0% 15%;
+   --sidebar-accent-foreground: 0 0% 95%;
+   --sidebar-border: 0 0% 20%;
+   --sidebar-ring: var(--red-mid);
+}
+
+/* Force dark theme appearance */
+html {
+   color-scheme: dark;
+}
+
 body {
   /* Changed default font for a more standard look */
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  /* Add a more vibrant and dynamic gradient background */
-  background: linear-gradient(135deg, hsl(var(--accent) / 0.7) 0%, hsl(var(--primary) / 0.5) 35%, hsl(var(--secondary) / 0.7) 70%, hsl(var(--accent) / 0.6) 100%);
-  background-size: 200% 200%; /* Allow animation */
-  animation: gradient-animation 15s ease infinite; /* Animate gradient */
+  /* Updated gradient background to red/black theme */
+  background: linear-gradient(135deg, hsl(var(--red-dark)) 0%, hsl(var(--black-true)) 50%, hsl(var(--red-mid) / 0.8) 100%);
+  background-size: 250% 250%; /* Increase size for smoother animation */
+  animation: gradient-animation 20s ease infinite alternate; /* Slower, smoother, alternate direction */
   background-attachment: fixed; /* Keep gradient fixed during scroll */
   /* Ensure body takes full height */
   min-height: 100vh;
+  /* Ensure text is readable */
+  color: hsl(var(--foreground));
 }
 
 @layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 210 40% 98%; /* Updated Primary (Light Blue) */
-    --primary-foreground: 222.2 47.4% 11.2%; /* Updated Primary Foreground */
-    --secondary: 210 40% 96.1%; /* Updated Secondary (Lighter Blue) */
-    --secondary-foreground: 222.2 47.4% 11.2%; /* Updated Secondary Foreground */
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    /* Updated accent color to a vibrant Teal */
-    --accent: 170 80% 40%;
-    /* Updated accent foreground for better contrast */
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 170 80% 40%; /* Use accent for ring */
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-  .dark {
-     /* Ensure dark mode variables are defined, even if not fully themed */
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 210 40% 9.8%; /* Updated Primary (Dark Blue) */
-    --primary-foreground: 0 0% 98%; /* Updated Primary Foreground */
-    --secondary: 217.2 32.6% 17.5%; /* Updated Secondary (Darker Blue/Gray) */
-    --secondary-foreground: 0 0% 98%; /* Updated Secondary Foreground */
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    /* Updated accent color to a lighter Teal for dark mode */
-    --accent: 170 70% 50%;
-    /* Updated accent foreground for dark mode */
-    --accent-foreground: 210 40% 9.8%; /* Match dark primary */
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 170 70% 50%; /* Use accent for ring */
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-     --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-}
+  /* Remove .dark class specific overrides as we are forcing dark theme */
+  /* :root variables already define the dark theme */
 
-@layer base {
   * {
     @apply border-border;
   }
   body {
-    @apply text-foreground; /* Removed bg-background to allow gradient */
-    /* Smooth transition for background image changes */
-    transition: background-image 0.5s ease-in-out, background 0.5s ease-in-out;
+    @apply text-foreground;
+    /* Smooth transition for potential future background changes */
+    transition: background 0.5s ease-in-out;
   }
 }
 
@@ -110,31 +89,31 @@ body {
   100% { background-position: 0% 50%; }
 }
 
-
-/* Add utility for glassmorphism */
+/* Glassmorphism effect adjusted for dark red/black theme */
 @layer utilities {
   .glassmorphic {
-     /* Adjusted alpha for better contrast, increased blur, refined shadow */
-    @apply bg-background/60 backdrop-blur-xl rounded-xl shadow-2xl border border-white/10;
+    /* Darker background, adjusted blur and shadow for the new theme */
+    @apply bg-card/70 backdrop-blur-lg rounded-xl shadow-2xl border border-white/10;
+    box-shadow: 0 8px 32px 0 hsla(var(--red-dark) / 0.3); /* Reddish shadow */
   }
-  .dark .glassmorphic {
-     /* Adjusted alpha for dark mode, potentially different border */
-     @apply bg-background/65 border-white/5;
-  }
+  /* No need for .dark .glassmorphic as dark is default */
 }
 
-/* Add sparkle animation */
+/* Sparkle animation - use a contrasting color like light gray or white */
 @layer utilities {
   @keyframes sparkle {
-    0%, 100% { opacity: 1; transform: scale(1) translate(-50%, -50%) rotate(0deg); }
-    50% { opacity: 0.6; transform: scale(1.4) translate(-50%, -50%) rotate(15deg); }
+    0%, 100% { opacity: 0.8; transform: scale(1) translate(-50%, -50%) rotate(0deg); }
+    50% { opacity: 0.4; transform: scale(1.4) translate(-50%, -50%) rotate(15deg); }
   }
   .animate-sparkle {
-    animation: sparkle 1.8s infinite ease-in-out;
+    animation: sparkle 2s infinite ease-in-out; /* Slightly slower */
+     /* Use a color that contrasts well with red/black */
+     /* Using foreground which is light gray/white */
+     color: hsl(var(--foreground) / 0.8);
   }
 }
 
-/* Entrance animation for the main card */
+/* Entrance animation */
 @layer utilities {
   @keyframes fade-slide-in {
     from {
@@ -147,6 +126,6 @@ body {
     }
   }
   .animate-fade-slide-in {
-    animation: fade-slide-in 0.5s ease-out forwards;
+    animation: fade-slide-in 0.6s ease-out forwards; /* Slightly slower */
   }
 }

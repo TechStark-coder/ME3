@@ -37,88 +37,153 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect, disabled =
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
-  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null); // null: initial, true: granted, false: denied/error
   const { toast } = useToast();
 
-  // Memoize getCameraPermission
-  const getCameraPermission = useCallback(async () => {
-    // Quick exit if already have permission
-    if (hasCameraPermission === true) return true;
-     // Reset permission state to null if retrying after denial
-     if (hasCameraPermission === false) {
-        setHasCameraPermission(null);
+
+  // Memoize stopCamera - ensure cleanup happens reliably
+  const stopCamera = useCallback(() => {
+    console.log("Attempting to stop camera...");
+    let tracksStopped = false;
+    // Stop stream tracks if stream state exists
+    if (stream) {
+        stream.getTracks().forEach(track => {
+            track.stop();
+            tracksStopped = true;
+        });
+        setStream(null); // Clear stream state
+        console.log("Stream state tracks stopped and cleared.");
+    }
+    // Explicitly stop tracks from video element's srcObject just in case
+    if (videoRef.current && videoRef.current.srcObject) {
+        const currentSrcObject = videoRef.current.srcObject as MediaStream;
+        currentSrcObject.getTracks().forEach(track => {
+             if (track.readyState === 'live') { // Only stop live tracks
+                track.stop();
+                tracksStopped = true;
+            }
+        });
+        videoRef.current.srcObject = null; // Clear the video source
+        console.log("Video element srcObject tracks stopped and cleared.");
+    } else if (videoRef.current) {
+         console.log("Video element exists but has no srcObject to stop.");
+    }
+
+    if (tracksStopped) {
+        console.log("Camera tracks stopped.");
+    } else {
+        console.log("No active camera tracks found to stop.");
+    }
+
+    setIsCameraOpen(false); // Ensure UI closes
+    // Don't automatically reset hasCameraPermission here - user might retry
+  }, [stream]); // Dependency only on stream state
+
+
+   // Request and handle camera permission
+  const getCameraPermission = useCallback(async (isRetry = false) => {
+    // Reset state if retrying after denial/error
+    if (isRetry) {
+        console.log("Retrying camera permission request...");
+        setHasCameraPermission(null); // Reset to initial state for retry feedback
+        stopCamera(); // Ensure any previous stream is stopped before retrying
+        await new Promise(resolve => setTimeout(resolve, 100)); // Small delay before requesting again
+    } else if (hasCameraPermission === true) {
+         console.log("Camera permission already granted.");
+         return true; // Already have permission
+    }
+
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      console.error("getUserMedia not supported");
+      toast({
+        variant: 'destructive',
+        title: 'Camera Not Supported',
+        description: 'Your browser does not support camera access.',
+      });
+      setHasCameraPermission(false);
+      return false;
     }
 
     try {
       console.log("Requesting camera permission...");
-      const mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+       // Try environment camera first, fallback to default
+       const constraints = { video: { facingMode: 'environment' } };
+       let mediaStream: MediaStream;
+       try {
+           mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+           console.log("Environment camera accessed.");
+       } catch (err) {
+           console.warn("Environment camera failed, trying default:", err);
+           mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
+           console.log("Default camera accessed.");
+       }
+
       console.log("Camera permission granted.");
       setHasCameraPermission(true);
-      setStream(mediaStream);
+      setStream(mediaStream); // Set stream state
+
       if (videoRef.current) {
-          videoRef.current.srcObject = mediaStream;
-          // Ensure video plays when metadata is loaded
-          videoRef.current.onloadedmetadata = () => {
-             console.log("Video metadata loaded, attempting to play...");
-             videoRef.current?.play().catch(err => {
-                 console.error("Video play failed:", err);
-                 // Attempt to play again after a short delay or user interaction might be needed
-             });
-          };
-           // Add an error handler for the video element
-          videoRef.current.onerror = (e) => {
-              console.error("Video element error:", e);
-              // Potentially show a more specific error to the user
-               toast({
-                 variant: 'destructive',
-                 title: 'Video Playback Error',
-                 description: 'Could not display the camera feed.',
-              });
-          };
+        videoRef.current.srcObject = mediaStream;
+        videoRef.current.onloadedmetadata = () => {
+            console.log("Video metadata loaded.");
+            videoRef.current?.play().catch(playErr => {
+                console.error("Video play failed:", playErr);
+                toast({
+                    variant: 'destructive',
+                    title: 'Camera Error',
+                    description: 'Could not start camera preview. It might be in use.',
+                 });
+            });
+        };
+        videoRef.current.onerror = (e) => {
+          console.error("Video element error:", e);
+          toast({
+            variant: 'destructive',
+            title: 'Video Playback Error',
+            description: 'Could not display the camera feed.',
+          });
+          stopCamera(); // Stop camera on video error
+          setHasCameraPermission(false); // Set permission state to error
+        };
+      } else {
+         console.warn("videoRef.current is null when trying to set srcObject");
+         // Stop the obtained stream if video element is not available
+         mediaStream.getTracks().forEach(track => track.stop());
+         setHasCameraPermission(false); // Indicate error state
+         return false;
       }
-      return true;
+      return true; // Permission granted and stream assigned
+
     } catch (error) {
       console.error('Error accessing camera:', error);
-       let description = 'Please enable camera permissions in your browser settings.';
-       if (error instanceof Error) {
-           if (error.name === 'NotAllowedError') {
-               description = 'Camera access was denied. Please enable permissions in your browser settings.';
-           } else if (error.name === 'NotFoundError') {
-               description = 'No camera found. Please ensure a camera is connected and enabled.';
-           } else if (error.name === 'NotReadableError') {
-               description = 'Camera is already in use or there was a hardware error.';
-           }
-       }
-      setHasCameraPermission(false);
+      let description = 'Could not access camera. Please ensure it\'s not in use and permissions are allowed.';
+      if (error instanceof Error) {
+        if (error.name === 'NotAllowedError') {
+          description = 'Camera access was denied. Please enable permissions in your browser settings and retry.';
+        } else if (error.name === 'NotFoundError') {
+          description = 'No camera found. Please ensure a camera is connected and enabled.';
+        } else if (error.name === 'NotReadableError') {
+          description = 'Camera is currently in use or there was a hardware error. Please close other apps using the camera and retry.';
+        } else if (error.name === 'AbortError') {
+             description = 'Camera access request was aborted. Please try again.';
+        } else if (error.name === 'SecurityError') {
+             description = 'Camera access is blocked by browser security settings (e.g., in an insecure context).';
+        } else if (error.name === 'TypeError') {
+             description = 'Invalid camera constraints requested.'; // Should not happen with simple constraints
+        }
+      }
+      setHasCameraPermission(false); // Set to false on any error
       toast({
         variant: 'destructive',
         title: 'Camera Access Failed',
         description: description,
+        duration: 7000, // Show longer
       });
-      stopCamera(); // Cleanup on failure
+      stopCamera(); // Ensure cleanup on failure
       return false;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasCameraPermission, toast]); // Removed stopCamera from deps
-
-    // Memoize stopCamera
-  const stopCamera = useCallback(() => {
-    console.log("Stopping camera...");
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-      console.log("Stream tracks stopped.");
-    }
-    if (videoRef.current) {
-        const currentStream = videoRef.current.srcObject as MediaStream;
-        currentStream?.getTracks().forEach(track => track.stop());
-        videoRef.current.srcObject = null; // Clear the video source
-        console.log("Video source cleared and tracks stopped.");
-    }
-    setStream(null);
-    setIsCameraOpen(false);
-    // Don't reset hasCameraPermission here automatically
-    console.log("Camera stopped, state updated.");
-  }, [stream]); // Removed videoRef.current from dependencies
+  }, [hasCameraPermission, toast, stopCamera]); // Include stopCamera
 
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -154,71 +219,72 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect, disabled =
     }
   };
 
+  // Start camera flow
   const startCamera = async () => {
-     if (disabled) return; // Don't start if disabled
-
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        setIsCameraOpen(true);
-        const permissionGranted = await getCameraPermission();
-        if (!permissionGranted) {
-            // If permission was explicitly denied or failed, keep camera UI open but show error
-             // setIsCameraOpen(false); // Don't close immediately, show the error state
-        }
-    } else {
-       toast({
-         title: "Camera Not Supported",
-         description: "Your browser does not support camera access.",
-         variant: "destructive",
-       });
-       setIsCameraOpen(false); // Close if feature not supported
-    }
+     if (disabled) return;
+     setIsCameraOpen(true); // Open UI first
+     await getCameraPermission(); // Request permission
+     // UI state (like showing error message) is handled by hasCameraPermission state changes
   };
 
   const takePicture = () => {
-    if (videoRef.current && canvasRef.current && stream && hasCameraPermission === true) {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const context = canvas.getContext('2d');
-      if (context) {
-        try {
-            // Flip the image horizontally if it's from the front camera (optional)
-            // if (video.srcObject && video.srcObject.getVideoTracks()[0].getSettings().facingMode === 'user') {
-            //     context.translate(canvas.width, 0);
-            //     context.scale(-1, 1);
-            // }
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            // Get image as data URL directly
-            const dataUrl = canvas.toDataURL('image/jpeg'); // Or 'image/png'
-            if (dataUrl && dataUrl !== 'data:,') { // Check if canvas is not blank
-                 onImageSelect(dataUrl, 'captured_image.jpg'); // Pass data URL
-                 stopCamera(); // Close camera after taking picture
-            } else {
-                 throw new Error("Canvas returned empty data URL.");
-            }
-        } catch (error) {
-             console.error("Error capturing or processing image:", error);
-             toast({
-                 title: "Capture Failed",
-                 description: "Could not capture image from camera feed. Please try again.",
-                 variant: "destructive",
-             });
-        }
-      } else {
-          toast({
-            title: "Canvas Error",
-            description: "Could not get canvas context.",
-            variant: "destructive",
+    // Ensure all conditions are met
+     if (!videoRef.current || !canvasRef.current || !stream || hasCameraPermission !== true || !videoRef.current.videoWidth || !videoRef.current.videoHeight) {
+         console.warn("Take picture called but conditions not met:", {
+             videoReady: !!videoRef.current?.videoWidth,
+             canvasReady: !!canvasRef.current,
+             streamActive: !!stream,
+             permission: hasCameraPermission
          });
-      }
-    } else {
-         console.warn("Take picture called but conditions not met:", { stream, hasCameraPermission });
          toast({
-            title: "Capture Error",
-            description: "Camera is not ready or permission denied.",
-            variant: "destructive",
+             title: "Capture Error",
+             description: hasCameraPermission === false
+                 ? "Camera permission denied. Please allow access."
+                 : "Camera is not ready. Please wait or try again.",
+             variant: "destructive",
          });
+         return;
+     }
+
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const context = canvas.getContext('2d');
+
+    if (!context) {
+        console.error("Could not get canvas context.");
+        toast({
+            title: "Canvas Error",
+            description: "Internal error preparing image capture.",
+            variant: "destructive",
+        });
+        return;
+    }
+
+    try {
+        // Draw video frame to canvas
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Get image as data URL
+        const dataUrl = canvas.toDataURL('image/jpeg'); // Use JPEG for smaller size typically
+
+        if (!dataUrl || dataUrl === 'data:,') {
+            throw new Error("Canvas returned empty data URL.");
+        }
+
+        onImageSelect(dataUrl, 'captured_image.jpg'); // Pass data URL
+        stopCamera(); // Close camera after successful capture
+
+    } catch (error) {
+        console.error("Error capturing or processing image:", error);
+        toast({
+            title: "Capture Failed",
+            description: `Could not capture image from camera feed. ${error instanceof Error ? error.message : ''}`,
+            variant: "destructive",
+        });
+        // Optionally stop camera even on failure, or allow retry
+        // stopCamera();
     }
   };
 
@@ -252,46 +318,53 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect, disabled =
         </>
       ) : (
         <div className="w-full flex flex-col items-center gap-4">
-           <div className="relative w-full max-w-md border-2 border-border/50 rounded-lg overflow-hidden shadow-md"> {/* Added border/shadow */}
-             {/* Video should ideally be rendered conditionally or styles adjusted
-                 to avoid layout shifts and potential issues if srcObject is briefly null */}
-             <div className={`w-full aspect-video bg-muted flex items-center justify-center`}> {/* Always flex container */}
-                <video
+           <div className="relative w-full max-w-md border-2 border-border/50 rounded-lg overflow-hidden shadow-md bg-muted"> {/* Added background */}
+             <div className={`w-full aspect-video flex items-center justify-center`}> {/* Always render container */}
+                 {/* Video element - Render it but control visibility/source */}
+                 <video
                     ref={videoRef}
-                    className={`w-full h-full object-cover ${stream && hasCameraPermission === true ? 'block' : 'hidden'}`} // More reliable hiding
+                     // Conditionally apply classes, ensure it's always in DOM for ref
+                    className={cn(
+                         'w-full h-full object-cover transition-opacity duration-300',
+                         stream && hasCameraPermission === true ? 'opacity-100' : 'opacity-0' // Fade in/out
+                    )}
                     playsInline
                     autoPlay // Let useEffect handle play via onloadedmetadata
                     muted
                  />
 
-                 {/* Alert shown when permission is denied */}
-                {hasCameraPermission === false && (
-                    <Alert variant="destructive" className="m-4 border-destructive/50 bg-destructive/10"> {/* Styled Alert */}
-                        <AlertTitle className="text-center font-semibold">Camera Access Required</AlertTitle>
-                        <AlertDescription className="text-center mt-2">
-                            Please allow camera access in browser settings.
-                            <Button onClick={getCameraPermission} variant="link" className="p-1 h-auto text-destructive dark:text-red-400 font-bold block mx-auto mt-1">Retry Permission</Button>
-                        </AlertDescription>
-                    </Alert>
-                )}
-
-                 {/* Placeholder/Loading state while checking permission/initializing */}
+                 {/* Loading/Initializing State */}
                 {hasCameraPermission === null && (
-                     <div className="w-full h-full flex items-center justify-center p-4">
+                     <div className="absolute inset-0 flex items-center justify-center p-4">
                         <p className="text-muted-foreground animate-pulse text-center">Initializing camera...</p>
                      </div>
+                )}
+
+                 {/* Permission Denied/Error State */}
+                {hasCameraPermission === false && (
+                    <div className="absolute inset-0 flex items-center justify-center p-4">
+                        <Alert variant="destructive" className="max-w-sm border-destructive/50 bg-destructive/10">
+                            <AlertTitle className="text-center font-semibold">Camera Access Required</AlertTitle>
+                            <AlertDescription className="text-center mt-2">
+                                Please allow camera access in browser settings.
+                                {/* Pass isRetry=true to getCameraPermission */}
+                                <Button onClick={() => getCameraPermission(true)} variant="link" className="p-1 h-auto text-destructive dark:text-red-400 font-bold block mx-auto mt-1">Retry Permission</Button>
+                            </AlertDescription>
+                        </Alert>
+                    </div>
                 )}
             </div>
           </div>
 
           <canvas ref={canvasRef} className="hidden"></canvas>
 
-          {/* Capture button enabled only when ready */}
+          {/* Capture button enabled only when stream is active and permission granted */}
           {hasCameraPermission === true && stream && (
               <Button
                 onClick={takePicture}
                 className="w-full max-w-xs bg-accent text-accent-foreground hover:bg-accent/90 shadow-md transition-transform hover:scale-105" // Accent button with effects
-                disabled={!stream || !videoRef.current?.videoWidth} // Disable until video has dimensions
+                 // Disable until video has dimensions, indicating readiness
+                disabled={!videoRef.current?.videoWidth || !videoRef.current?.videoHeight}
               >
                 <Camera className="mr-2 h-4 w-4" /> Capture Image
               </Button>

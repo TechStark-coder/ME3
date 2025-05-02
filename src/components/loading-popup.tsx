@@ -11,14 +11,15 @@ interface LoadingPopupProps {
 
 const LoadingPopup: React.FC<LoadingPopupProps> = ({ imageUrl, message }) => {
   // Fallback image URL if the provided one is invalid or null
-  const displayImageUrl = imageUrl || '/placeholder-image.png'; // Use a placeholder if needed
+  const displayImageUrl = imageUrl || '/placeholder-image.png'; // Ensure this placeholder exists or use a default
 
   return (
     // Centered container for the popup content
     <div className="flex flex-col items-center justify-center p-6 min-h-[350px]"> {/* Slightly increased min-height */}
       <div className="relative w-52 h-52 md:w-64 md:h-64"> {/* Slightly larger image container */}
         {/* Circular image container */}
-        <div className="absolute inset-0 rounded-full overflow-hidden border-4 border-primary/80 shadow-xl animate-pulse bg-muted/50"> {/* Enhanced border and shadow */}
+         {/* Use accent color for border, adjusted pulse */}
+        <div className="absolute inset-0 rounded-full overflow-hidden border-4 border-accent/80 shadow-xl animate-pulse bg-muted/50">
           <Image
             src={displayImageUrl} // Use the display URL
             alt="Analyzing image..." // Updated alt text
@@ -29,8 +30,8 @@ const LoadingPopup: React.FC<LoadingPopupProps> = ({ imageUrl, message }) => {
             onError={(e) => {
               // Handle potential image loading errors, e.g., show a default placeholder
               console.error("Error loading image in popup:", e);
-              // Optionally set a different placeholder source
-              // e.currentTarget.src = '/error-placeholder.png';
+              // Optionally set a different placeholder source if the primary fails
+              // e.currentTarget.src = '/fallback-placeholder.png';
             }}
           />
         </div>
@@ -38,8 +39,9 @@ const LoadingPopup: React.FC<LoadingPopupProps> = ({ imageUrl, message }) => {
         {[...Array(8)].map((_, i) => (
           <Sparkles
             key={i}
+             // Use foreground color for sparkles to contrast with red/black bg
             className={cn(
-              'absolute text-accent animate-sparkle',
+              'absolute text-foreground/80 animate-sparkle', // Changed color to foreground
               'w-5 h-5 md:w-7 md:h-7' // Adjusted size slightly
             )}
             style={{
