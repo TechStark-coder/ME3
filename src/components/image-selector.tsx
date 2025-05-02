@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Upload, Camera } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { cn } from '@/lib/utils'; // Import the cn function
 
 interface ImageSelectorProps {
   // Update prop type to expect a data URI
