@@ -1,9 +1,10 @@
+
 "use client";
 
 import React, { useRef, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+// import { Label } from '@/components/ui/label'; // Removed unused Label
 import { Upload, Camera } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // Added Alert imports
@@ -154,7 +155,7 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
     <div className="flex flex-col items-center justify-center gap-4 w-full">
       {!isCameraOpen ? (
         <>
-          {/* Changed variant to secondary and removed glassmorphic for visibility */}
+          {/* Ensure buttons are always visible */}
           <Button onClick={handleUploadClick} variant="secondary" className="w-full">
             <Upload className="mr-2 h-4 w-4" /> Upload Image
           </Button>
@@ -166,9 +167,9 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
             className="hidden" // Keep default input hidden
             id="image-upload"
           />
-          <Label htmlFor="image-upload" className="sr-only">Upload Image</Label>
+          {/* <Label htmlFor="image-upload" className="sr-only">Upload Image</Label> */} {/* Removed unused Label */}
 
-          {/* Changed variant to secondary and removed glassmorphic for visibility */}
+          {/* Ensure buttons are always visible */}
           <Button onClick={startCamera} variant="secondary" className="w-full">
             <Camera className="mr-2 h-4 w-4" /> Use Camera
           </Button>

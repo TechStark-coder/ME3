@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -109,5 +110,16 @@ body {
   .dark .glassmorphic {
      /* Adjusted alpha for dark mode */
      @apply bg-background/70;
+  }
+}
+
+/* Add sparkle animation */
+@layer utilities {
+  @keyframes sparkle {
+    0%, 100% { opacity: 1; transform: scale(1) translate(-50%, -50%); }
+    50% { opacity: 0.5; transform: scale(1.3) translate(-50%, -50%); }
+  }
+  .animate-sparkle {
+    animation: sparkle 1.5s infinite ease-in-out;
   }
 }
