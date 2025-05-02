@@ -156,7 +156,7 @@ export default function Home() {
 
   return (
      <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-8 relative z-10 overflow-hidden">
-       {/* Apply entrance animation here */}
+        {/* Apply entrance animation here */}
        <div className="glassmorphic p-6 md:p-10 w-full max-w-xl text-center relative animate-fade-slide-in">
          {isLoading ? (
            // Show loading popup only when isLoading is true
