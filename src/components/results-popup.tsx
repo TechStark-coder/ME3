@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { RefreshCw } from 'lucide-react'; // Keep RefreshCw
+import { cn } from '@/lib/utils';
 
 interface ResultsPopupProps {
   results: string[]; // Represents the list of differences
@@ -15,7 +16,7 @@ interface ResultsPopupProps {
 
 const ResultsPopup: React.FC<ResultsPopupProps> = ({ results, onClose, image1Url, image2Url }) => {
   return (
-    <Card className="w-full max-w-lg mx-auto relative glassmorphic border-none shadow-xl">
+    <Card className="w-full max-w-xl mx-auto relative glassmorphic border-none shadow-xl"> {/* Increased max-w */}
       <CardHeader className="text-center pb-4">
         <CardTitle className="text-2xl font-bold text-foreground">Analysis Complete</CardTitle>
         {/* Updated description */}
@@ -52,22 +53,35 @@ const ResultsPopup: React.FC<ResultsPopupProps> = ({ results, onClose, image1Url
         </div>
 
         {/* Updated heading */}
-        <h3 className="text-lg font-semibold mb-3 text-left text-foreground">Differences in Image 2:</h3>
-        {results.length > 0 ? (
-          <ScrollArea className="h-32 w-full rounded-md border border-border p-3 bg-background/50">
-            <ul className="list-disc list-inside space-y-1 text-left">
-              {results.map((item, index) => (
-                // Use bold font for emphasis
-                <li key={index} className="font-bold text-foreground">
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </ScrollArea>
-        ) : (
-          // Updated message for no differences
-          <p className="text-muted-foreground text-left p-3 border border-border rounded-md bg-background/50">No significant differences identified.</p>
-        )}
+        <h3 className="text-lg font-semibold mb-3 text-center text-foreground">Differences Found:</h3>
+
+        {/* Board Container */}
+        <div className="relative bg-[#deb887] dark:bg-[#8B4513] p-2 rounded-md shadow-md mx-auto max-w-md"> {/* Wooden Frame */}
+          <div className="relative bg-[#F5F5DC] dark:bg-[#E6D8B8] p-4 rounded-sm min-h-[150px]"> {/* Paper Background */}
+            {/* Decorative Pins */}
+            <div className="absolute top-2 left-2 w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full shadow-inner"></div>
+            <div className="absolute top-2 right-2 w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full shadow-inner"></div>
+            {/* <div className="absolute bottom-2 left-2 w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full shadow-inner"></div>
+            <div className="absolute bottom-2 right-2 w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full shadow-inner"></div> */}
+
+            {results.length > 0 ? (
+              <ScrollArea className="h-36 w-full"> {/* Adjusted height */}
+                <ul className="list-disc list-inside space-y-1 text-left text-black dark:text-gray-800"> {/* Text color for paper */}
+                  {results.map((item, index) => (
+                    // Use bold font for emphasis
+                    <li key={index} className="font-semibold"> {/* Changed to font-semibold for slightly less emphasis */}
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </ScrollArea>
+            ) : (
+              // Updated message for no differences
+              <p className="text-gray-600 dark:text-gray-700 text-center p-3">No significant differences identified.</p>
+            )}
+          </div>
+        </div>
+
          <div className="mt-6 text-center">
           {/* Button remains "Start Over" */}
           <Button onClick={onClose} variant="outline">
