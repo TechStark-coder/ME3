@@ -25,6 +25,53 @@ export default function Home() {
   // State for error messages
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Helper function to convert potential blob URL to data URI (if needed, else returns original)
+  // This is kept simple and assumes input might be blob or data URI already
+  const ensureDataUri = async (url: string | null): Promise<string | null> => {
+    if (!url) return null;
+    if (url.startsWith('data:')) {
+      return url; // Already a data URI
+    }
+    // Basic check if it might be a blob URL - you might need a more robust check
+    if (url.startsWith('blob:')) {
+      console.warn('Received blob URL, attempting conversion. Direct data URI is preferred.');
+      try {
+        // Use fetch within the client-side context where it's valid
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch blob: ${response.statusText}`);
+        }
+        const blob = await response.blob();
+        // Revoke the blob URL after fetching to free up resources
+        URL.revokeObjectURL(url);
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      } catch (error) {
+        console.error("Error converting blob URL to data URI:", error);
+        toast({
+          title: "Image Conversion Error",
+          description: "Could not process the image from the camera capture.",
+          variant: "destructive",
+        });
+        return null; // Return null on conversion failure
+      }
+    }
+    // If it's neither, return null or handle as an error depending on expected inputs
+    console.warn('Received URL is not a data URI or recognized blob URL:', url.substring(0, 100));
+    // Assuming it SHOULD be a data URI if not a blob, treat as error or invalid input
+     toast({
+          title: "Invalid Image Data",
+          description: "Received an unexpected image format.",
+          variant: "destructive",
+        });
+    return null;
+  };
+
+
   const handleImageSelect = useCallback((dataUrl: string, fileName: string = "Image uploaded") => {
     setImageUrls((prevUrls) => {
       const firstEmptyIndex = prevUrls.findIndex(url => url === null);
@@ -35,7 +82,8 @@ export default function Home() {
         // Update file names
         setImageFileNames(prevNames => {
           const newNames = [...prevNames];
-          newNames[firstEmptyIndex] = fileName;
+          // Ensure a generic name if fileName is empty or undefined
+          newNames[firstEmptyIndex] = fileName || `Image ${firstEmptyIndex + 1}`;
           return newNames;
         });
 
@@ -45,12 +93,10 @@ export default function Home() {
         setShowResultsPopup(false); // Hide results popup if open
 
         // Check if both images are now selected AFTER updating state
-        // Don't automatically trigger compare, wait for button click
-        // if (firstEmptyIndex === 0 && prevUrls[1] !== null) {
-        //    // Both images are selected
-        // } else if (firstEmptyIndex === 1 && prevUrls[0] !== null) {
-        //     // Both images are selected
-        // }
+        const bothSelected = newUrls[0] !== null && newUrls[1] !== null;
+        if (bothSelected) {
+          console.log("Both images selected, ready for comparison.");
+        }
 
         return newUrls;
       }
@@ -105,9 +151,15 @@ export default function Home() {
     setShowResultsPopup(false); // Ensure results popup is hidden initially
 
     try {
-      // data URIs are already stored in imageUrls
-      const dataUri1 = imageUrls[0]!;
-      const dataUri2 = imageUrls[1]!;
+      // Ensure both URLs are valid data URIs before sending to the AI
+      // This ensures blob URLs are converted *before* sending to the server-side flow
+      const dataUri1 = await ensureDataUri(imageUrls[0]);
+      const dataUri2 = await ensureDataUri(imageUrls[1]);
+
+      if (!dataUri1 || !dataUri2) {
+          throw new Error("One or both images could not be processed. Please try re-uploading.");
+      }
+
 
       // Call the AI flow
       console.log('Calling AI flow...'); // Log before calling
@@ -124,13 +176,22 @@ export default function Home() {
       console.error("Error comparing images:", error);
       let errorDesc = 'An unexpected error occurred during analysis.';
       if (error instanceof Error) {
-        errorDesc = error.message;
+        // Check for specific Genkit/API errors if possible
+        if (error.message.includes('SAFETY')) {
+             errorDesc = 'The analysis could not be completed due to safety restrictions. Please try with different images.';
+        } else if (error.message.includes('API key not valid')) {
+             errorDesc = 'Invalid API Key. Please check your configuration.';
+        }
+         else {
+             errorDesc = error.message;
+         }
       }
       setErrorMessage(`Analysis Failed: ${errorDesc}`);
       toast({
         title: "Analysis Failed",
         description: errorDesc,
         variant: "destructive",
+        duration: 9000, // Show error longer
       });
       // Reset potentially inconsistent state on error
       setShowResultsPopup(false);
@@ -156,7 +217,7 @@ export default function Home() {
 
   return (
      <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-8 relative z-10 overflow-hidden">
-        {/* Apply entrance animation here */}
+       {/* Apply entrance animation here */}
        <div className="glassmorphic p-6 md:p-10 w-full max-w-xl text-center relative animate-fade-slide-in">
          {isLoading ? (
            // Show loading popup only when isLoading is true
@@ -184,6 +245,7 @@ export default function Home() {
                          className="object-contain rounded-md mb-3 shadow-md" {/* Added shadow */}
                           data-ai-hint="abstract comparison"
                        />
+                        {/* Updated to show file name consistently */}
                         <p className="text-sm text-foreground truncate w-full px-2 font-medium" title={imageFileNames[index] || ''}>
                              {imageFileNames[index] || `Image ${index + 1}`}
                         </p>
