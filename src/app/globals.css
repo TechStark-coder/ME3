@@ -5,59 +5,62 @@
 
 /* Define new red/black colors */
 :root {
-  --red-dark: 0 100% 15%; /* Darker Red */
-  --red-mid: 0 90% 35%; /* Mid Red */
+  --red-dark: 0 100% 25%; /* Slightly lighter Dark Red */
+  --red-mid: 0 90% 50%; /* Mid Red - brighter */
   --black-true: 0 0% 0%; /* True Black */
-  --gray-dark: 0 0% 10%; /* Very Dark Gray */
-  --gray-light: 0 0% 80%; /* Light Gray for text contrast */
+  --gray-dark: 0 0% 20%; /* Dark Gray for accents */
+  --gray-light: 0 0% 95%; /* Light Gray for text on dark elements */
+  --white-off: 0 0% 98%; /* Off-white for backgrounds */
+  --white-soft: 0 0% 96%; /* Slightly softer white */
 
-  /* Override existing theme variables for red/black theme */
-  --background: 0 0% 4%; /* Very dark background */
-  --foreground: 0 0% 95%; /* Light foreground for contrast */
-  --card: 0 0% 8%; /* Dark card background */
-  --card-foreground: 0 0% 95%;
-  --popover: 0 0% 8%; /* Dark popover */
-  --popover-foreground: 0 0% 95%;
+  /* Override existing theme variables for a LIGHTER red/black theme */
+  --background: 0 0% 99%; /* Very light background (almost white) */
+  --foreground: 0 0% 3.9%; /* Dark foreground for contrast */
+  --card: 0 0% 100%; /* White card background */
+  --card-foreground: 0 0% 3.9%;
+  --popover: 0 0% 100%; /* White popover */
+  --popover-foreground: 0 0% 3.9%;
   --primary: var(--red-mid); /* Use mid red as primary */
-  --primary-foreground: 0 0% 98%; /* White/Light text on red */
-  --secondary: var(--red-dark); /* Use dark red as secondary */
-  --secondary-foreground: 0 0% 98%; /* White/Light text on dark red */
-  --muted: 0 0% 15%; /* Dark muted background */
-  --muted-foreground: 0 0% 60%; /* Lighter muted text */
-  --accent: var(--red-mid); /* Use mid red as accent */
-  --accent-foreground: 0 0% 98%; /* White/Light text on accent */
-  --destructive: 0 70% 50%; /* Keep a slightly different red for destructive actions */
-  --destructive-foreground: 0 0% 98%;
-  --border: 0 0% 20%; /* Darker border */
-  --input: 0 0% 18%; /* Dark input background */
+  --primary-foreground: var(--white-off); /* White/Light text on red */
+  --secondary: 0 0% 96.1%; /* Light gray secondary background */
+  --secondary-foreground: 0 0% 9%; /* Dark text on light gray */
+  --muted: 0 0% 96.1%; /* Light muted background */
+  --muted-foreground: 0 0% 45.1%; /* Mid-gray muted text */
+  --accent: 0 0% 94%; /* Slightly darker light gray accent */
+  --accent-foreground: 0 0% 9%; /* Dark text on accent */
+  --destructive: 0 84.2% 60.2%; /* Standard destructive red */
+  --destructive-foreground: var(--white-off);
+  --border: 0 0% 89.8%; /* Light border */
+  --input: 0 0% 93%; /* Slightly darker light input background */
   --ring: var(--red-mid); /* Use mid red for ring */
   --chart-1: var(--red-mid);
-  --chart-2: 0 80% 45%; /* Variation of red */
-  --chart-3: 0 70% 30%; /* Darker variation */
-  --chart-4: 0 100% 60%; /* Brighter variation */
-  --chart-5: 0 60% 25%; /* Even darker */
+  --chart-2: 0 80% 65%; /* Lighter variation of red */
+  --chart-3: 0 70% 45%; /* Mid variation */
+  --chart-4: 0 100% 70%; /* Even brighter variation */
+  --chart-5: var(--red-dark); /* Darker red */
   --radius: 0.5rem;
 
-  /* Sidebar (assuming dark theme base) */
-   --sidebar-background: 0 0% 8%;
-   --sidebar-foreground: 0 0% 95%;
-   --sidebar-primary: var(--red-mid);
-   --sidebar-primary-foreground: 0 0% 98%;
-   --sidebar-accent: 0 0% 15%;
-   --sidebar-accent-foreground: 0 0% 95%;
-   --sidebar-border: 0 0% 20%;
-   --sidebar-ring: var(--red-mid);
+  /* Sidebar (adjusting for light theme base) */
+   --sidebar-background: 0 0% 98%; /* Light sidebar */
+   --sidebar-foreground: 0 0% 3.9%; /* Dark text */
+   --sidebar-primary: var(--red-mid); /* Red primary */
+   --sidebar-primary-foreground: var(--white-off); /* Light text on primary */
+   --sidebar-accent: 0 0% 92%; /* Lighter accent */
+   --sidebar-accent-foreground: 0 0% 9%; /* Dark text on accent */
+   --sidebar-border: 0 0% 88%; /* Light border */
+   --sidebar-ring: var(--red-mid); /* Red ring */
 
    /* Variables for cursor light effect */
    --cursor-x: 50vw; /* Default to center */
    --cursor-y: 50vh;
    --cursor-light-size: 400px; /* Size of the light circle */
-   --cursor-light-color: hsla(0, 0%, 100%, 0.06); /* Subtle white light */
+   /* Adjusted for lighter background - darker, less opaque light */
+   --cursor-light-color: hsla(0, 0%, 0%, 0.06);
 }
 
-/* Force dark theme appearance */
+/* Force light theme appearance */
 html {
-   color-scheme: dark;
+   color-scheme: light;
 }
 
 body {
@@ -82,9 +85,7 @@ body {
 }
 
 @layer base {
-  /* Remove .dark class specific overrides as we are forcing dark theme */
-  /* :root variables already define the dark theme */
-
+  /* Variables define the light theme */
   * {
     @apply border-border;
   }
@@ -93,20 +94,16 @@ body {
   }
 }
 
-/* REMOVED Gradient Animation */
-/* @keyframes gradient-animation { ... } */
-
-/* Glassmorphism effect adjusted for dark theme */
+/* Glassmorphism effect adjusted for light theme */
 @layer utilities {
   .glassmorphic {
-    /* Darker background, adjusted blur and shadow */
-    @apply bg-card/70 backdrop-blur-lg rounded-xl shadow-2xl border border-white/10;
-    box-shadow: 0 8px 32px 0 hsla(0, 0%, 10%, 0.3); /* Darker shadow */
+    /* Lighter background, adjusted blur and shadow for light theme */
+    @apply bg-background/70 backdrop-blur-lg rounded-xl shadow-2xl border border-black/5; /* Very subtle border */
+    box-shadow: 0 8px 32px 0 hsla(0, 0%, 50%, 0.15); /* Softer shadow */
   }
-  /* No need for .dark .glassmorphic as dark is default */
 }
 
-/* Sparkle animation - use a contrasting color like light gray or white */
+/* Sparkle animation - use a contrasting color like dark gray */
 @layer utilities {
   @keyframes sparkle {
     0%, 100% { opacity: 0.8; transform: scale(1) translate(-50%, -50%) rotate(0deg); }
@@ -114,9 +111,9 @@ body {
   }
   .animate-sparkle {
     animation: sparkle 2s infinite ease-in-out; /* Slightly slower */
-     /* Use a color that contrasts well with dark bg */
-     /* Using foreground which is light gray/white */
-     color: hsl(var(--foreground) / 0.8);
+     /* Use a color that contrasts well with light bg */
+     /* Using foreground which is dark */
+     color: hsl(var(--foreground) / 0.6); /* Slightly less opaque */
   }
 }
 

@@ -39,6 +39,7 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect, disabled =
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null); // null: initial, true: granted, false: denied/error
+  const [isVideoReady, setIsVideoReady] = useState(false); // Track if video element has dimensions
   const { toast } = useToast();
 
 
@@ -56,16 +57,19 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect, disabled =
         videoRef.current.srcObject = null;
         console.log("Video element srcObject cleared.");
      }
+     setIsVideoReady(false); // Reset video ready state
   }, []);
 
 
   // Start camera flow - simplified request
   const startCamera = useCallback(async () => {
-    if (disabled || hasCameraPermission === true) return; // Don't restart if already granted and stream active
+    // Prevent starting if disabled or already open and running
+    if (disabled || (isCameraOpen && stream && hasCameraPermission === true)) return;
 
     console.log("Attempting to start camera...");
     setIsCameraOpen(true); // Show camera UI
     setHasCameraPermission(null); // Indicate loading state
+    setIsVideoReady(false); // Reset video ready state
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       console.error("getUserMedia not supported");
@@ -121,23 +125,34 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect, disabled =
       setStream(mediaStream); // Store the stream
 
       // Assign stream to video element *after* state is set
-      // This ensures the video element is ready in the DOM when stream is assigned
        if (videoRef.current) {
             videoRef.current.srcObject = mediaStream;
-            // Autoplay after metadata is loaded
+
             videoRef.current.onloadedmetadata = () => {
-                console.log("Video metadata loaded, attempting to play...");
-                 // Use promise-based play()
+                console.log("Video metadata loaded.");
+                // Attempt to play after metadata is loaded
                 videoRef.current?.play().then(() => {
                     console.log("Video playing.");
+                    // Check dimensions after play starts successfully
+                    // Using a small timeout to allow rendering and dimension calculation
+                     setTimeout(() => {
+                        if (videoRef.current && videoRef.current.videoWidth > 0 && videoRef.current.videoHeight > 0) {
+                            console.log(`Video dimensions available: ${videoRef.current.videoWidth}x${videoRef.current.videoHeight}`);
+                            setIsVideoReady(true); // Set video ready state
+                        } else {
+                            console.warn("Video dimensions not available after play started.");
+                            setIsVideoReady(false);
+                        }
+                    }, 100); // Adjust timeout if needed
+
                 }).catch(playErr => {
                     console.error("Video play failed:", playErr);
-                    toast({
+                     toast({
                         variant: 'destructive',
                         title: 'Camera Error',
-                        description: 'Could not start camera preview. It might be in use or autoplay blocked.',
+                        description: 'Could not start camera preview. Autoplay might be blocked.',
                     });
-                    // Optionally set state to indicate play error
+                    setIsVideoReady(false);
                 });
             };
              videoRef.current.onerror = (e) => {
@@ -150,11 +165,21 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect, disabled =
                  stopCameraTracks(mediaStream); // Stop stream on video error
                  setStream(null);
                  setHasCameraPermission(false); // Indicate error state
+                 setIsVideoReady(false);
+             };
+             // Add listener for 'canplay' event as another check for readiness
+             videoRef.current.oncanplay = () => {
+                 console.log("Video can play.");
+                 if (videoRef.current && videoRef.current.videoWidth > 0 && videoRef.current.videoHeight > 0) {
+                    console.log(`Video dimensions confirmed on canplay: ${videoRef.current.videoWidth}x${videoRef.current.videoHeight}`);
+                    setIsVideoReady(true);
+                 }
              };
        } else {
          console.warn("videoRef.current is null when stream ready. Stopping stream.");
          stopCameraTracks(mediaStream); // Stop the obtained stream if video element isn't available
          setHasCameraPermission(false); // Indicate error state
+         setIsVideoReady(false);
        }
 
     } catch (error) {
@@ -182,19 +207,20 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect, disabled =
         description: description,
         duration: 9000, // Show longer
       });
-      // Do not automatically close camera UI on error, let user see the message and retry button
-      // setIsCameraOpen(false);
+      // Keep camera UI open on error for retry
       stopCameraTracks(stream); // Ensure cleanup
       setStream(null);
+      setIsVideoReady(false);
     }
-  }, [disabled, hasCameraPermission, toast, stream, stopCameraTracks]); // Add stream and stopCameraTracks
+  }, [disabled, isCameraOpen, hasCameraPermission, toast, stream, stopCameraTracks]); // Added isCameraOpen
 
    // Function to explicitly stop the camera and close UI
   const handleStopCamera = useCallback(() => {
       stopCameraTracks(stream);
       setStream(null);
       setIsCameraOpen(false);
-      setHasCameraPermission(null); // Reset permission state if closing manually
+      setHasCameraPermission(null); // Reset permission state
+      setIsVideoReady(false); // Reset video ready state
       console.log("Camera explicitly stopped and UI closed.");
   }, [stream, stopCameraTracks]);
 
@@ -204,8 +230,8 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect, disabled =
     if (file && file.type.startsWith('image/')) {
       try {
         const dataUrl = await readFileAsDataURL(file);
-        // Use a generic name for uploaded files for consistency
-        onImageSelect(dataUrl, "Image uploaded");
+        // Use the actual file name
+        onImageSelect(dataUrl, file.name);
       } catch (error) {
         console.error("Error reading file:", error);
         toast({
@@ -234,69 +260,86 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect, disabled =
   };
 
 
-  const takePicture = () => {
-    // Ensure all conditions are met
-     if (!videoRef.current || !canvasRef.current || !stream || hasCameraPermission !== true || !videoRef.current.videoWidth || !videoRef.current.videoHeight) {
-         console.warn("Take picture called but conditions not met:", {
-             videoReady: !!videoRef.current?.videoWidth,
-             canvasReady: !!canvasRef.current,
-             streamActive: !!stream,
-             permission: hasCameraPermission
-         });
-         toast({
-             title: "Capture Error",
-             description: hasCameraPermission === false
-                 ? "Camera permission denied. Please allow access."
-                 : "Camera is not ready. Please wait or try again.",
-             variant: "destructive",
-         });
-         return;
-     }
-
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    // Use naturalWidth/Height for intrinsic dimensions if available, else videoWidth/Height
-    const captureWidth = video.naturalWidth || video.videoWidth;
-    const captureHeight = video.naturalHeight || video.videoHeight;
-
-    canvas.width = captureWidth;
-    canvas.height = captureHeight;
-    const context = canvas.getContext('2d');
-
-    if (!context) {
-        console.error("Could not get canvas context.");
+ const takePicture = () => {
+    // Enhanced checks for readiness
+    if (!videoRef.current || !canvasRef.current || !stream || hasCameraPermission !== true || !isVideoReady) {
+        console.warn("Take picture called but conditions not met:", {
+            videoRefExists: !!videoRef.current,
+            canvasRefExists: !!canvasRef.current,
+            streamActive: !!stream,
+            permission: hasCameraPermission,
+            isVideoReady: isVideoReady, // Check our state
+            videoDimensions: videoRef.current ? `${videoRef.current.videoWidth}x${videoRef.current.videoHeight}` : 'N/A'
+        });
         toast({
-            title: "Canvas Error",
-            description: "Internal error preparing image capture.",
+            title: "Capture Error",
+            description: hasCameraPermission === false
+                ? "Camera permission denied. Please allow access."
+                : !isVideoReady
+                ? "Camera feed is not ready yet. Please wait a moment."
+                : "Could not prepare for capture. Please try again.",
             variant: "destructive",
         });
         return;
     }
 
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    // Use videoWidth/Height as primary source now that isVideoReady confirms they are > 0
+    const captureWidth = video.videoWidth;
+    const captureHeight = video.videoHeight;
+
+    if (captureWidth <= 0 || captureHeight <= 0) {
+        console.error(`Invalid capture dimensions: ${captureWidth}x${captureHeight}`);
+        toast({ title: "Capture Error", description: "Camera returned invalid video dimensions.", variant: "destructive" });
+        return;
+    }
+
+
+    canvas.width = captureWidth;
+    canvas.height = captureHeight;
+    console.log(`Canvas dimensions set to: ${canvas.width}x${canvas.height}`);
+
+    // Get 2D context
+    const context = canvas.getContext('2d');
+    if (!context) {
+        console.error("Could not get canvas 2D context.");
+        toast({
+            title: "Canvas Error",
+            description: "Internal error preparing image capture context.",
+            variant: "destructive",
+        });
+        return;
+    }
+    console.log("Canvas 2D context obtained.");
+
+
     try {
         // Draw video frame to canvas
-        console.log(`Drawing video frame to canvas (${captureWidth}x${captureHeight})...`);
+        console.log(`Drawing video frame to canvas (${canvas.width}x${canvas.height})...`);
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        console.log("Video frame drawn to canvas.");
 
-        // Get image as data URL
-        const dataUrl = canvas.toDataURL('image/jpeg'); // Use JPEG for smaller size typically
+        // Get image as data URL (JPEG recommended for size)
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.9); // Quality 0.9
+        console.log(`Canvas toDataURL executed. Length: ${dataUrl.length}`);
 
         if (!dataUrl || dataUrl === 'data:,') {
-            throw new Error("Canvas returned empty data URL.");
+            throw new Error("Canvas returned empty or invalid data URL.");
         }
 
         console.log("Image captured successfully.");
-        onImageSelect(dataUrl, 'captured_image.jpg'); // Pass data URL
+        onImageSelect(dataUrl, 'captured_image.jpg'); // Pass data URL and a filename
         handleStopCamera(); // Close camera after successful capture
 
     } catch (error) {
-        console.error("Error capturing or processing image:", error);
+        console.error("Error during canvas drawImage or toDataURL:", error);
         toast({
             title: "Capture Failed",
-            description: `Could not capture image from camera feed. ${error instanceof Error ? error.message : ''}`,
+            description: `Could not capture image from camera feed. ${error instanceof Error ? error.message : 'Unknown canvas error'}`,
             variant: "destructive",
         });
-        // Optionally stop camera even on failure, or allow retry
+        // Consider if camera should be stopped on failure or allow retry
         // handleStopCamera();
     }
   };
@@ -316,16 +359,12 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect, disabled =
     if (videoRef.current && stream && videoRef.current.srcObject !== stream) {
       console.log("Assigning new stream to video element.");
       videoRef.current.srcObject = stream;
-       // onloadedmetadata and onerror are now set directly within startCamera
-       // but re-adding play attempt here might be needed if metadata loads instantly
-       videoRef.current.play().catch(playErr => {
-            if (playErr.name !== 'AbortError') { // Ignore errors caused by stopping the stream
-                console.error("Video play failed on stream update:", playErr);
-            }
-       });
+      setIsVideoReady(false); // Reset ready state when stream changes
+       // Play attempt is handled in startCamera's onloadedmetadata
     } else if (videoRef.current && !stream && videoRef.current.srcObject) {
         console.log("Clearing video element srcObject because stream is null.");
         videoRef.current.srcObject = null;
+        setIsVideoReady(false); // Reset ready state
     }
   }, [stream]);
 
@@ -362,10 +401,10 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect, disabled =
                     className={cn(
                          'w-full h-full object-cover transition-opacity duration-300',
                          // Show video only when stream exists AND permission is confirmed true
-                         stream && hasCameraPermission === true ? 'opacity-100' : 'opacity-0'
+                         stream && hasCameraPermission === true ? 'opacity-100' : 'opacity-0' // Fade in/out
                     )}
                     playsInline // Essential for mobile
-                    autoPlay // Let useEffect/startCamera handle play()
+                    // autoPlay // Let useEffect/startCamera handle play()
                     muted // Required for autoplay in most browsers
                  />
 
@@ -392,17 +431,21 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect, disabled =
             </div>
           </div>
 
+          {/* Hidden canvas for capturing frame */}
           <canvas ref={canvasRef} className="hidden"></canvas>
 
-          {/* Capture button enabled only when stream is active, permission granted, and video dimensions are available */}
+          {/* Capture button enabled only when camera is ready */}
           {hasCameraPermission === true && stream && (
               <Button
                 onClick={takePicture}
                 className="w-full max-w-xs bg-accent text-accent-foreground hover:bg-accent/90 shadow-md transition-transform hover:scale-105" // Accent button with effects
-                 // Disable until video has dimensions, indicating readiness
-                disabled={!videoRef.current?.videoWidth || !videoRef.current?.videoHeight}
+                 // Disable button until video is ready (has dimensions and can play)
+                disabled={!isVideoReady}
+                 aria-disabled={!isVideoReady} // Accessibility
+                 title={!isVideoReady ? "Waiting for camera feed..." : "Capture Image"}
               >
-                <Camera className="mr-2 h-4 w-4" /> Capture Image
+                <Camera className="mr-2 h-4 w-4" />
+                 {isVideoReady ? 'Capture Image' : 'Preparing Camera...'}
               </Button>
           )}
 
@@ -418,3 +461,4 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect, disabled =
 };
 
 export default ImageSelector;
+
