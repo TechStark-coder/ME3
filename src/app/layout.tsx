@@ -2,12 +2,12 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
-import CursorLightEffect from '@/components/cursor-light-effect';
-import AppHeader from '@/components/app-header'; // Import AppHeader
+// import CursorLightEffect from '@/components/cursor-light-effect'; // Temporarily commented out
+import AppHeader from '@/components/app-header'; 
 
 export const metadata: Metadata = {
-  title: 'SameSameButDifferent', // Updated title
-  description: 'Upload or capture images and let AI analyze them.', // Updated description
+  title: 'SameSameButDifferent', 
+  description: 'Upload or capture images and let AI analyze them.', 
 };
 
 export default function RootLayout({
@@ -18,8 +18,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`antialiased`}>
-        <CursorLightEffect />
-        <AppHeader /> {/* Add the AppHeader component */}
+        {/* <CursorLightEffect /> */} {/* Temporarily commented out */}
+        <AppHeader /> 
         {children}
         <Toaster />
       </body>

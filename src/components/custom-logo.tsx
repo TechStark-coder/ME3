@@ -1,4 +1,4 @@
-// src/components/custom-logo.tsx
+/ src/components/custom-logo.tsx
 import React from 'react';
 
 interface CustomLogoProps extends React.SVGProps<SVGSVGElement> {}
@@ -58,8 +58,8 @@ const CustomLogo: React.FC<CustomLogoProps> = (props) => {
           fontSize="28" 
           fontWeight="bold" 
           textAnchor="middle" 
-          fill={textNavy}
-          stroke={highlightWhite} // White outline
+          fill={"#1A237E"}
+          stroke={"#FFFFFF"} // White outline
           strokeWidth="0.5" // Thin outline
         >
           Ai Image
@@ -72,8 +72,8 @@ const CustomLogo: React.FC<CustomLogoProps> = (props) => {
           fontSize="28" 
           fontWeight="bold" 
           textAnchor="middle" 
-          fill={textNavy}
-          stroke={highlightWhite} // White outline
+          fill={"#1A237E"}
+          stroke={"#FFFFFF"} // White outline
           strokeWidth="0.5" // Thin outline
         >
           Compare
