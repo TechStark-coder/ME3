@@ -6,8 +6,9 @@ import ImageSelector from '@/components/image-selector';
 import LoadingPopup from '@/components/loading-popup';
 import ResultsPopup from '@/components/results-popup'; // Reusing for consistency, will adapt props
 import { Button } from '@/components/ui/button';
-import { X, RefreshCw, SearchCheck, Image as ImageIcon } from 'lucide-react'; // Added ImageIcon import
+import { X, RefreshCw, SearchCheck, Image as ImageIcon, ArrowLeft } from 'lucide-react'; // Added ImageIcon import and ArrowLeft
 import Image from 'next/image';
+import Link from 'next/link'; // Import Link
 import { analyzeImageObjects } from '@/ai/flows/analyze-single-image-flow'; // New flow
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
@@ -341,6 +342,11 @@ export default function AnalyzeSingleImagePage() {
                   <RefreshCw className="mr-2 h-4 w-4" /> Reset
                 </Button>
               )}
+               <Link href="/" passHref legacyBehavior>
+                <Button variant="outline" className="w-full sm:w-auto border-border/70 hover:border-foreground transition-colors" disabled={isLoading}>
+                  <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
+                </Button>
+              </Link>
             </div>
           </>
         )}
