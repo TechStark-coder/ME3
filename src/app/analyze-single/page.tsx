@@ -6,7 +6,7 @@ import ImageSelector from '@/components/image-selector';
 import LoadingPopup from '@/components/loading-popup';
 import ResultsPopup from '@/components/results-popup'; // Reusing for consistency, will adapt props
 import { Button } from '@/components/ui/button';
-import { X, RefreshCw, SearchCheck } from 'lucide-react'; // SearchCheck for analyze button
+import { X, RefreshCw, SearchCheck, Image as ImageIcon } from 'lucide-react'; // Added ImageIcon import
 import Image from 'next/image';
 import { analyzeImageObjects } from '@/ai/flows/analyze-single-image-flow'; // New flow
 import { useToast } from "@/hooks/use-toast";
@@ -362,3 +362,5 @@ export default function AnalyzeSingleImagePage() {
     </main>
   );
 }
+
+    
