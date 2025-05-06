@@ -12,16 +12,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Image as ImageIcon, Sparkles } from "lucide-react"; 
-import CustomLogo from './custom-logo'; // Import the new CustomLogo
+import CustomLogo from './custom-logo'; 
 
 const AppHeader = () => {
   return (
     <header className="sticky top-0 z-50 w-full bg-transparent">
       <div className="container flex h-14 max-w-screen-2xl items-center justify-between">
         <Link href="/" className="flex items-center space-x-2">
-          {/* Increased logo size for better visibility of text */}
+          {/* CustomLogo will inherit text-primary for its main shape, text inside SVG is now white */}
           <CustomLogo className="h-10 w-auto md:h-12 text-primary" /> 
-          <span className="font-bold inline-block text-primary">SameSameButDifferent</span>
+          {/* Text "SameSameButDifferent" should be white, so use text-foreground */}
+          <span className="font-bold inline-block text-foreground">SameSameButDifferent</span>
         </Link>
         
         <DropdownMenu>
