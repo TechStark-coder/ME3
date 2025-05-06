@@ -91,6 +91,8 @@ For each object identified, provide its common name. Be as specific as possible 
 - Instead of "books", say "stack of three hardcover books: one red, one blue, one green".
 - If there are many small, similar items, try to count them or describe the collection, e.g., "approximately 10-12 small, colorful toy soldiers on the floor", "a dense collection of various seashells in a glass bowl".
 
+**Crucially, for items like toys, figurines, collectibles, or branded products, make every effort to identify specific characters (e.g., 'Spider-Man action figure', 'Pikachu plush toy', 'Iron Man figurine'), brand names if legible (e.g., 'LEGO Millennium Falcon', 'Funko Pop! figure of Darth Vader'), or specific types (e.g., 'wooden toy train', 'Barbie doll in a pink dress', 'yellow Tonka dump truck'). Do not just say 'toy' or 'figurine' if more detail can be extracted. If multiple distinct toy figurines are present, list them with as much unique detail as possible (e.g., 'small blue robot figurine on the top shelf', 'green T-Rex dinosaur toy next to the books', 'collection of various Star Wars minifigures on the desk').**
+
 **Your goal is to be hyper-exhaustive and leave no visible stone unturned.** Do not overlook small, background, or seemingly insignificant items. If you can see it and identify it as a distinct object, list it.
 If there are multiple similar items, list them individually if they are clearly distinct or as a group if appropriate but still provide detail (e.g., "three green apples on a plate", "five assorted pens in a desk organizer").
 

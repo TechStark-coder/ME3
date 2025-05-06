@@ -326,7 +326,7 @@ export default function AnalyzeSingleImagePage() {
               {showAnalyzeButton && (
                 <Button
                   onClick={handleAnalyzeImage}
-                  className="w-full sm:w-auto bg-accent text-accent-foreground hover:bg-accent/90 shadow-md transition-transform hover:scale-105"
+                  className="w-full sm:max-w-xs bg-accent text-accent-foreground hover:bg-accent/90 shadow-md transition-transform hover:scale-105"
                   disabled={isLoading}
                 >
                   <SearchCheck className="mr-2 h-4 w-4" /> Analyze Image
@@ -336,14 +336,14 @@ export default function AnalyzeSingleImagePage() {
                 <Button
                   onClick={handleReset}
                   variant="outline"
-                  className="w-full sm:w-auto border-border/70 hover:border-foreground transition-colors"
+                  className="w-full sm:max-w-xs border-border/70 hover:border-foreground transition-colors"
                   disabled={isLoading}
                 >
                   <RefreshCw className="mr-2 h-4 w-4" /> Reset
                 </Button>
               )}
                <Link href="/" passHref legacyBehavior>
-                <Button variant="outline" className="w-full sm:w-auto border-border/70 hover:border-foreground transition-colors" disabled={isLoading}>
+                <Button variant="outline" className="w-full sm:max-w-xs border-border/70 hover:border-foreground transition-colors" disabled={isLoading}>
                   <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
                 </Button>
               </Link>
