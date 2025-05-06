@@ -4,31 +4,83 @@ import React from 'react';
 interface CustomLogoProps extends React.SVGProps<SVGSVGElement> {}
 
 const CustomLogo: React.FC<CustomLogoProps> = (props) => {
+  // Colors from the provided image (approximations)
+  const robotBlue = "#2C3E8F"; // Darker blue for robot body
+  const accentYellow = "#FDD835"; // Vibrant yellow for screen and text
+  const highlightWhite = "#FFFFFF";
+  const screenDetailBlue = "#5C6BC0"; // Lighter blue for screen details
+
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 200 150" // Adjusted viewBox for the new logo's aspect ratio
+      viewBox="0 0 280 180" // Adjusted viewBox to better fit the new logo's aspect ratio
       {...props}
     >
-      <g fill="currentColor"> {/* Main shape color will be inherited */}
-        {/* Eye Symbol - Outer Shape */}
-        <path d="M100,20C30,20,10,60,10,60s-5,45,90,45s90-45,90-45S170,20,100,20z M100,95c-35,0-55-22-55-22s15-23,55-23s55,23,55,23S135,95,100,95z"/>
-        {/* Eye Symbol - Iris */}
-        <circle cx="100" cy="65" r="20"/>
-        {/* Eye Symbol - Pupil */}
-        <circle cx="100" cy="65" r="10" fill="hsl(var(--background))"/> {/* Use background for pupil to make it 'see-through' or contrast */}
-         {/* Optional: small highlight on pupil */}
-        <circle cx="108" cy="58" r="4" fill="hsl(var(--foreground))" opacity="0.7"/>
+      <g id="logo-background-fill" className="hidden">
+        {/* This is a trick: if currentColor is black (default from user image bg), make it transparent */}
+        {/* Or, if you want a specific background, define it here. For now, transparent. */}
+        <rect width="100%" height="100%" fill="transparent" />
+      </g>
+      
+      {/* Robot Figure */}
+      <g id="robot">
+        {/* Head */}
+        <path d="M70,45 A25,25 0 1,1 70,95 A25,25 0 0,1 70,45 Z" fill={robotBlue} />
+        <circle cx="70" cy="70" r="18" fill={highlightWhite} /> {/* Visor outline */}
+        <circle cx="70" cy="70" r="15" fill={robotBlue} /> {/* Inner visor */}
+        <path d="M60,60 Q70,50 80,60" stroke={highlightWhite} strokeWidth="2" fill="none" /> {/* Visor detail */}
+         {/* NM letters (simplified) */}
+        <text x="58" y="100" fill={accentYellow} fontSize="10" fontWeight="bold">N</text>
+        <text x="72" y="100" fill={accentYellow} fontSize="10" fontWeight="bold">M</text>
 
-        {/* Swoosh under eye */}
-        <path d="M70,92 Q100,102 130,92 Q100,100 70,92 Z" />
 
-        {/* Text: "Ai Image" - Fill with foreground color (white) */}
-        <text x="100" y="122" fontFamily="Arial, Helvetica, sans-serif" fontSize="16" fontWeight="bold" textAnchor="middle" fill="hsl(var(--foreground))">
+        {/* Body */}
+        <path d="M45,90 C40,100 40,130 55,140 L85,140 C100,130 100,100 95,90 Z" fill={robotBlue} />
+        <circle cx="70" cy="115" r="7" fill={highlightWhite} /> {/* Chest light */}
+
+        {/* Arm holding tablet (simplified) */}
+        <path d="M90,95 Q100,85 110,90 L115,115 Q105,125 95,120 Z" fill={robotBlue} />
+      </g>
+
+      {/* Tablet/Screen */}
+      <g id="tablet">
+        <rect x="120" y="50" width="110" height="80" rx="10" ry="10" fill={accentYellow} stroke={robotBlue} strokeWidth="2" />
+        {/* Screen details (simplified) */}
+        <rect x="130" y="60" width="40" height="20" fill={screenDetailBlue} rx="3"/>
+        <rect x="180" y="60" width="20" height="20" fill={screenDetailBlue} rx="3"/>
+        <rect x="130" y="90" width="25" height="30" fill={screenDetailBlue} rx="3"/>
+        <rect x="165" y="90" width="25" height="30" fill={highlightWhite} rx="3"/>
+         {/* Vertical bars like a chart */}
+        <rect x="200" y="90" width="8" height="30" fill={screenDetailBlue} />
+        <rect x="212" y="100" width="8" height="20" fill={screenDetailBlue} />
+         {/* Dots */}
+        <circle cx="185" cy="90" r="2" fill={robotBlue} />
+        <circle cx="185" cy="97" r="2" fill={robotBlue} />
+        <circle cx="185" cy="104" r="2" fill={robotBlue} />
+      </g>
+
+      {/* Text "Ai Image Compare" */}
+      <g id="logo-text">
+        <text 
+          x="150" 
+          y="155" 
+          fontFamily="Arial, Helvetica, sans-serif" 
+          fontSize="22" 
+          fontWeight="bold" 
+          textAnchor="middle" 
+          fill={accentYellow}
+        >
           Ai Image
         </text>
-        {/* Text: "Compare" - Fill with foreground color (white) */}
-        <text x="100" y="140" fontFamily="Arial, Helvetica, sans-serif" fontSize="16" fontWeight="bold" textAnchor="middle" fill="hsl(var(--foreground))">
+        <text 
+          x="150" 
+          y="178" 
+          fontFamily="Arial, Helvetica, sans-serif" 
+          fontSize="22" 
+          fontWeight="bold" 
+          textAnchor="middle" 
+          fill={accentYellow}
+        >
           Compare
         </text>
       </g>

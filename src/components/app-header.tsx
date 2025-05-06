@@ -11,18 +11,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Image as ImageIcon, Sparkles } from "lucide-react"; 
+import { Image as ImageIconLucide, Sparkles } from "lucide-react"; // Changed ImageIcon to ImageIconLucide to avoid conflict
 import CustomLogo from './custom-logo'; 
 
 const AppHeader = () => {
   return (
     <header className="sticky top-0 z-50 w-full bg-transparent">
-      <div className="container flex h-14 max-w-screen-2xl items-center justify-between">
+      <div className="container flex h-14 max-w-screen-2xl items-center justify-between py-2"> {/* Added py-2 for vertical padding */}
         <Link href="/" className="flex items-center space-x-2">
-          {/* CustomLogo will inherit text-primary for its main shape, text inside SVG is now white */}
-          <CustomLogo className="h-10 w-auto md:h-12 text-primary" /> 
-          {/* Text "SameSameButDifferent" should be white, so use text-foreground */}
-          <span className="font-bold inline-block text-foreground">SameSameButDifferent</span>
+          {/* The new CustomLogo has its own colors. text-primary might not color it, but h-10/h-12 classes control size */}
+          <CustomLogo className="h-10 w-auto md:h-12" /> 
+          <span className="font-bold inline-block text-foreground text-lg md:text-xl">SameSameButDifferent</span>
         </Link>
         
         <DropdownMenu>
@@ -38,7 +37,7 @@ const AppHeader = () => {
             <Link href="/analyze-single" passHref legacyBehavior>
               <DropdownMenuItem asChild>
                 <a className="flex items-center gap-2 cursor-pointer">
-                  <ImageIcon className="h-4 w-4" />
+                  <ImageIconLucide className="h-4 w-4" />
                   Analyze Single Image
                 </a>
               </DropdownMenuItem>
