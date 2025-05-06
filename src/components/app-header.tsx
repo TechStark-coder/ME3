@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Image as ImageIconLucide, Sparkles } from "lucide-react"; 
-import Image from 'next/image'; // Import Image component
 import CustomLogo from './custom-logo';
 
 const AppHeader = () => {
@@ -19,8 +18,8 @@ const AppHeader = () => {
     <header className="sticky top-0 z-50 w-full bg-transparent">
       <div className="container flex h-14 max-w-screen-2xl items-center justify-between py-2">
         <Link href="/" className="flex items-center space-x-2">
-          {/* Use Image component for the logo */}
-          <CustomLogo className="h-12 w-auto md:h-14" /> 
+          {/* Use CustomLogo component */}
+          <CustomLogo className="h-10 w-auto md:h-12" /> 
           <span className="font-bold inline-block text-foreground text-lg md:text-xl">SameSameButDifferent</span>
         </Link>
         
