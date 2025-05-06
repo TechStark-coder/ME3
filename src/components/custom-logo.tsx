@@ -4,82 +4,77 @@ import React from 'react';
 interface CustomLogoProps extends React.SVGProps<SVGSVGElement> {}
 
 const CustomLogo: React.FC<CustomLogoProps> = (props) => {
-  // Colors from the provided image (approximations)
-  const robotBlue = "#2C3E8F"; // Darker blue for robot body
-  const accentYellow = "#FDD835"; // Vibrant yellow for screen and text
-  const highlightWhite = "#FFFFFF";
-  const screenDetailBlue = "#5C6BC0"; // Lighter blue for screen details
+  const mgOrange = "#F57C00"; // Magnifying glass orange
+  const cameraBody = "#FFE0B2"; // Light peach/beige for camera body
+  const lensOuterTeal = "#0097A7"; // Darker teal for lens outer ring
+  const lensInnerGreen = "#4CAF50"; // Green for lens inner part
+  const cloudBlue = "#B2EBF2"; // Light cyan/blue for cloud shapes
+  const textNavy = "#1A237E"; // Dark navy blue for "Ai Image Compare" text
+  const highlightWhite = "#FFFFFF"; // For highlights and text outline
+  const cameraTopOrange = "#FB8C00"; // Slightly lighter orange for camera top detail/button
 
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 280 180" // Adjusted viewBox to better fit the new logo's aspect ratio
+      viewBox="0 0 220 185" // Adjusted viewBox for new design, height increased slightly for text
       {...props}
     >
-      <g id="logo-background-fill" className="hidden">
-        {/* This is a trick: if currentColor is black (default from user image bg), make it transparent */}
-        {/* Or, if you want a specific background, define it here. For now, transparent. */}
-        <rect width="100%" height="100%" fill="transparent" />
+      <g id="logo-background-elements">
+        {/* Simplified Cloud Shapes */}
+        <path d="M25,95 Q35,65 60,75 T95,90 Q85,115 60,105 T25,95 Z" fill={cloudBlue} opacity="0.7" />
+        <path d="M125,90 Q135,60 160,70 T195,85 Q185,110 160,100 T125,90 Z" fill={cloudBlue} opacity="0.7" />
+        
+        {/* Sparkle top-left area (simplified star) */}
+        <polygon points="45,50 48,60 58,63 48,66 45,76 42,66 32,63 42,60" fill={highlightWhite} />
       </g>
       
-      {/* Robot Figure */}
-      <g id="robot">
-        {/* Head */}
-        <path d="M70,45 A25,25 0 1,1 70,95 A25,25 0 0,1 70,45 Z" fill={robotBlue} />
-        <circle cx="70" cy="70" r="18" fill={highlightWhite} /> {/* Visor outline */}
-        <circle cx="70" cy="70" r="15" fill={robotBlue} /> {/* Inner visor */}
-        <path d="M60,60 Q70,50 80,60" stroke={highlightWhite} strokeWidth="2" fill="none" /> {/* Visor detail */}
-         {/* NM letters (simplified) */}
-        <text x="58" y="100" fill={accentYellow} fontSize="10" fontWeight="bold">N</text>
-        <text x="72" y="100" fill={accentYellow} fontSize="10" fontWeight="bold">M</text>
+      <g id="magnifying-glass-and-camera">
+        {/* Magnifying Glass Ring */}
+        {/* Fill with a very light transparent color to simulate the lens glass if needed, or keep transparent */}
+        <circle cx="110" cy="80" r="50" stroke={mgOrange} strokeWidth="12" fill="rgba(255,255,255,0.1)" /> 
+        
+        {/* Camera Body */}
+        <rect x="80" y="55" width="60" height="40" rx="5" ry="5" fill={cameraBody} />
+        {/* Camera Lens Assembly */}
+        <circle cx="110" cy="75" r="15" fill={lensOuterTeal} /> {/* Outer ring of lens */}
+        <circle cx="110" cy="75" r="9" fill={lensInnerGreen} /> {/* Inner part of lens */}
+        <circle cx="104" cy="72" r="3" fill={highlightWhite} opacity="0.8" /> {/* Lens highlight */}
+        {/* Camera Top detail / Button */}
+        <rect x="95" y="48" width="30" height="7" rx="2" ry="2" fill={cameraTopOrange} />
+         {/* Tiny dots on camera sides (simplified) */}
+        <circle cx="75" cy="90" r="1.5" fill={lensOuterTeal} />
+        <circle cx="145" cy="90" r="1.5" fill={lensOuterTeal} />
 
-
-        {/* Body */}
-        <path d="M45,90 C40,100 40,130 55,140 L85,140 C100,130 100,100 95,90 Z" fill={robotBlue} />
-        <circle cx="70" cy="115" r="7" fill={highlightWhite} /> {/* Chest light */}
-
-        {/* Arm holding tablet (simplified) */}
-        <path d="M90,95 Q100,85 110,90 L115,115 Q105,125 95,120 Z" fill={robotBlue} />
+        {/* Magnifying Glass Handle */}
+        <path d="M145,115 L175,145 A5,5 0 0,1 170,152 L140,122 A5,5 0 0,1 145,115 Z" fill={mgOrange} />
       </g>
 
-      {/* Tablet/Screen */}
-      <g id="tablet">
-        <rect x="120" y="50" width="110" height="80" rx="10" ry="10" fill={accentYellow} stroke={robotBlue} strokeWidth="2" />
-        {/* Screen details (simplified) */}
-        <rect x="130" y="60" width="40" height="20" fill={screenDetailBlue} rx="3"/>
-        <rect x="180" y="60" width="20" height="20" fill={screenDetailBlue} rx="3"/>
-        <rect x="130" y="90" width="25" height="30" fill={screenDetailBlue} rx="3"/>
-        <rect x="165" y="90" width="25" height="30" fill={highlightWhite} rx="3"/>
-         {/* Vertical bars like a chart */}
-        <rect x="200" y="90" width="8" height="30" fill={screenDetailBlue} />
-        <rect x="212" y="100" width="8" height="20" fill={screenDetailBlue} />
-         {/* Dots */}
-        <circle cx="185" cy="90" r="2" fill={robotBlue} />
-        <circle cx="185" cy="97" r="2" fill={robotBlue} />
-        <circle cx="185" cy="104" r="2" fill={robotBlue} />
-      </g>
-
-      {/* Text "Ai Image Compare" */}
       <g id="logo-text">
+        {/* AI IMAGE text */}
         <text 
-          x="150" 
-          y="155" 
-          fontFamily="Arial, Helvetica, sans-serif" 
-          fontSize="22" 
+          x="110" 
+          y="155"  // Positioned below the magnifying glass
+          fontFamily="Arial, 'Helvetica Neue', Helvetica, sans-serif" 
+          fontSize="28" 
           fontWeight="bold" 
           textAnchor="middle" 
-          fill={accentYellow}
+          fill={textNavy}
+          stroke={highlightWhite} // White outline
+          strokeWidth="0.5" // Thin outline
         >
           Ai Image
         </text>
+        {/* COMPARE text */}
         <text 
-          x="150" 
-          y="178" 
-          fontFamily="Arial, Helvetica, sans-serif" 
-          fontSize="22" 
+          x="110" 
+          y="180" // Second line of text
+          fontFamily="Arial, 'Helvetica Neue', Helvetica, sans-serif" 
+          fontSize="28" 
           fontWeight="bold" 
           textAnchor="middle" 
-          fill={accentYellow}
+          fill={textNavy}
+          stroke={highlightWhite} // White outline
+          strokeWidth="0.5" // Thin outline
         >
           Compare
         </text>
