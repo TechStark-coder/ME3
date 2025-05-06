@@ -6,7 +6,7 @@ import ImageSelector from '@/components/image-selector';
 import LoadingPopup from '@/components/loading-popup';
 import ResultsPopup from '@/components/results-popup'; // Reusing for consistency, will adapt props
 import { Button } from '@/components/ui/button';
-import { X, RefreshCw, SearchCheck, Image as ImageIcon, ArrowLeft } from 'lucide-react'; // Added ImageIcon import and ArrowLeft
+import { X, RefreshCw, SearchCheck, Image as ImageIconLucide, ArrowLeft } from 'lucide-react'; // Changed ImageIcon to ImageIconLucide
 import Image from 'next/image';
 import Link from 'next/link'; // Import Link
 import { analyzeImageObjects } from '@/ai/flows/analyze-single-image-flow'; // New flow
@@ -302,7 +302,7 @@ export default function AnalyzeSingleImagePage() {
                 </>
               ) : (
                 <div className="text-center text-muted-foreground group-hover:text-accent transition-colors pointer-events-none">
-                  <ImageIcon className="h-16 w-16 mx-auto mb-3" />
+                  <ImageIconLucide className="h-16 w-16 mx-auto mb-3" />
                   <p className="font-semibold">Drop or Click to Upload</p>
                   <p className="text-xs mt-1">(Or use camera below)</p>
                   {isDraggingOver && <p className="text-xs mt-1 text-primary font-bold">Drop here!</p>}
@@ -322,7 +322,7 @@ export default function AnalyzeSingleImagePage() {
               </p>
             )}
 
-            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center items-center w-full">
+            <div className="mt-8 flex flex-col gap-4 justify-center items-center w-full">
               {showAnalyzeButton && (
                 <Button
                   onClick={handleAnalyzeImage}

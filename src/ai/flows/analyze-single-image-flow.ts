@@ -26,7 +26,7 @@ const AnalyzeImageObjectsOutputSchema = z.object({
   objects: z
     .array(z.string())
     .describe(
-      'A comprehensive list of distinct objects identified in the image. Each item should be a concise name of an object (e.g., "Cat", "Laptop", "Coffee Mug", "Small red toy car on shelf", "Blue figurine on the right"). Be as detailed and exhaustive as possible.'
+      'A comprehensive list of distinct objects identified in the image. Each item should be a concise name of an object (e.g., "Cat", "Laptop", "Coffee Mug", "Small red toy car on shelf", "Blue figurine on the right", "Collection of books on the lower shelf", "Individual pencils in a cup"). Be as detailed and exhaustive as possible. List each unique item. If multiple similar items are present but distinct (e.g. different colored toys), list them with their distinguishing features.'
     ),
 });
 export type AnalyzeImageObjectsOutput = z.infer<typeof AnalyzeImageObjectsOutputSchema>;
@@ -74,22 +74,27 @@ const analyzeImageObjectsPrompt = ai.definePrompt({
   output: {
     schema: AnalyzeImageObjectsOutputSchema,
   },
-  prompt: `You are an extremely meticulous and detail-oriented image analysis AI. Your primary task is to carefully examine the provided image and identify **EVERY SINGLE** distinct, clearly visible object, no matter how small or seemingly insignificant.
+  prompt: `You are an exceptionally meticulous and hyper-detailed image analysis AI. Your primary task is to scrutinize the provided image with extreme care and identify **EVERY SINGLE** distinct, clearly visible object, regardless of its size, perceived importance, or location (foreground, background, on shelves, on desks, in hands, etc.). Be exhaustive and list them all.
 
-Pay close attention to:
-- Main subjects: People, animals, large items.
-- Background elements: Furniture, wall decorations, scenery, buildings.
-- Foreground elements: Items on tables, floors, or held by subjects.
-- **Small details:** Individual items on shelves (like figurines, books, toys), items on desks, tools, accessories, patterns, textures, and even specific parts of larger objects if they are distinct (e.g., "computer mouse" not just "computer accessories").
-- Decorative items: Vases, picture frames, sculptures, plants.
-- Clothing details: Hats, shoes, specific accessories if clearly identifiable.
+Pay extraordinarily close attention to:
+- **Main subjects:** People, animals, large items.
+- **Background elements:** Furniture (chairs, tables, sofas, beds, shelves, cabinets), wall decorations (paintings, posters, mirrors, clocks), scenery (trees, mountains, sky features), buildings (windows, doors, architectural details).
+- **Foreground elements:** Items on tables (cups, plates, cutlery, books, laptops, phones), items on floors (rugs, toys, bags), or items held by subjects.
+- **Tiny details and collections:** Individual items on shelves (e.g., "small blue toy car on the top shelf", "row of three different ceramic figurines on the middle shelf", "single yellow pencil in a red cup", "collection of assorted colorful buttons in a jar"), items on desks (pens, notepads, staplers, lamps), tools (hammers, screwdrivers), accessories (hats, scarves, jewelry, watches), specific patterns on clothing or objects, textures of surfaces, and even distinct parts of larger objects if they are clearly identifiable as separate entities (e.g., "computer mouse" and "keyboard" separately, not just "computer accessories").
+- **Decorative items:** Vases (e.g., "tall glass vase with red flowers"), picture frames (e.g., "silver picture frame with a beach photo"), sculptures, plants (e.g., "small potted succulent on windowsill", "large fern in a corner").
+- **Clothing details:** Hats, shoes, specific accessories if clearly identifiable (e.g., "red baseball cap", "black leather belt with a silver buckle").
+- **Text and Symbols:** Any readable text or distinct symbols on objects.
 
-For each object identified, provide its common name. Be as specific as possible regarding color, type, or any distinguishing features (e.g., "small red toy car on the top shelf", "blue ceramic coffee mug with a white handle", "silver laptop computer", "collection of colorful figurines on the dark brown shelf").
+For each object identified, provide its common name. Be as specific as possible regarding color, type, material, or any distinguishing features. Examples:
+- Instead of "toy", say "small, red, plastic toy car on the wooden shelf".
+- Instead of "cup", say "blue ceramic coffee mug with a white handle and a chip on the rim".
+- Instead of "books", say "stack of three hardcover books: one red, one blue, one green".
+- If there are many small, similar items, try to count them or describe the collection, e.g., "approximately 10-12 small, colorful toy soldiers on the floor", "a dense collection of various seashells in a glass bowl".
 
-**Your goal is to be exhaustive.** Do not overlook small or background items. List every object you can confidently identify.
-If there are multiple similar items, list them individually if they are distinct or as a group if appropriate (e.g., "three green apples" or "stack of books").
+**Your goal is to be hyper-exhaustive and leave no visible stone unturned.** Do not overlook small, background, or seemingly insignificant items. If you can see it and identify it as a distinct object, list it.
+If there are multiple similar items, list them individually if they are clearly distinct or as a group if appropriate but still provide detail (e.g., "three green apples on a plate", "five assorted pens in a desk organizer").
 
-List only the names of the objects in your response.
+Your response should ONLY be a list of the identified objects. Do not add any conversational fluff or introductory/concluding sentences.
 
 Image to analyze:
 {{media url=imageDataUri}}

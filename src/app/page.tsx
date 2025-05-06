@@ -32,15 +32,17 @@ const readFileAsDataURL = (file: File): Promise<string> => {
 async function blobUrlToDataUri(blobUrl: string): Promise<string | null> {
   if (typeof fetch === 'undefined') {
     console.error("Fetch API is not available in this environment.");
+    // Consider informing the user or disabling camera functionality if fetch isn't available.
     return null;
   }
 
   if (!blobUrl.startsWith('blob:')) {
     console.warn("Attempted to convert non-blob URL:", blobUrl.substring(0, 100));
+    // If it's already a data URL, just return it.
     if (blobUrl.startsWith('data:')) {
-      return blobUrl; // Already a data URL
+      return blobUrl;
     }
-    return null;
+    return null; // Or throw an error if this case is unexpected.
   }
 
   console.log("Fetching blob URL:", blobUrl.substring(0, 50));
@@ -49,7 +51,7 @@ async function blobUrlToDataUri(blobUrl: string): Promise<string | null> {
     console.log(`Fetch response status for ${blobUrl.substring(0, 50)}: ${response.status}`);
     if (!response.ok) {
       let errorBody = '';
-      try { errorBody = await response.text(); } catch { /* ignore */ }
+      try { errorBody = await response.text(); } catch { /* ignore, might not be text */ }
       console.error(`Failed to fetch blob: ${response.status} ${response.statusText}. Body: ${errorBody.substring(0, 100)} (URL: ${blobUrl.substring(0, 50)})`);
       throw new Error(`Failed to fetch blob: ${response.statusText}`);
     }
@@ -61,21 +63,24 @@ async function blobUrlToDataUri(blobUrl: string): Promise<string | null> {
       reader.onloadend = () => {
         console.log("FileReader finished reading.");
         try {
-          URL.revokeObjectURL(blobUrl); // Ensure blob URL is revoked
+          URL.revokeObjectURL(blobUrl); // Ensure blob URL is revoked to free resources
           console.log("Blob URL revoked:", blobUrl.substring(0, 50));
         } catch (revokeError) {
+          // This can happen if the URL was already revoked or became invalid.
+          // It's generally safe to ignore, but log for debugging.
           console.warn("Could not revoke blob URL (might already be revoked or invalid):", revokeError);
         }
         if (typeof reader.result === 'string') {
           resolve(reader.result);
         } else {
+          // This case should ideally not happen if readAsDataURL is used.
           reject(new Error("FileReader did not return a string result."));
         }
       };
       reader.onerror = (error) => {
         console.error("FileReader error:", error);
         try {
-          URL.revokeObjectURL(blobUrl); // Ensure blob URL is revoked on error
+          URL.revokeObjectURL(blobUrl); // Ensure blob URL is revoked on error as well
           console.log("Blob URL revoked after FileReader error:", blobUrl.substring(0, 50));
         } catch (revokeError) {
           console.warn("Could not revoke blob URL after error:", revokeError);
@@ -86,8 +91,9 @@ async function blobUrlToDataUri(blobUrl: string): Promise<string | null> {
     });
   } catch (error) {
     console.error(`Error during blob fetch/conversion for ${blobUrl.substring(0, 50)}:`, error);
+    // Attempt to revoke in case of any error during fetch or conversion
     try {
-      URL.revokeObjectURL(blobUrl); // Ensure blob URL is revoked on any catch
+      URL.revokeObjectURL(blobUrl);
       console.log("Blob URL revoked after fetch/conversion error:", blobUrl.substring(0, 50));
     } catch (revokeError) {
       console.warn("Could not revoke blob URL after fetch error:", revokeError);
@@ -108,6 +114,7 @@ const ensureDataUri = async (url: string | null, toast: ReturnType<typeof useToa
     try {
       const dataUri = await blobUrlToDataUri(url);
       if (!dataUri) {
+        // blobUrlToDataUri might return null if conversion fails internally
         toast({
           title: "Image Conversion Error",
           description: "Could not convert captured image data. Please try again.",
@@ -116,6 +123,7 @@ const ensureDataUri = async (url: string | null, toast: ReturnType<typeof useToa
       }
       return dataUri;
     } catch (error) {
+      // Catch any errors explicitly thrown by blobUrlToDataUri or other issues
       console.error("Error converting blob URL to data URI:", error);
       toast({
         title: "Image Conversion Error",
@@ -125,6 +133,7 @@ const ensureDataUri = async (url: string | null, toast: ReturnType<typeof useToa
       return null;
     }
   }
+  // If the URL is not a data URI and not a blob URL, it's an unsupported format
   console.error('Received URL is not a data URI or recognized blob URL:', url.substring(0, 100));
   toast({
     title: "Invalid Image Data",
@@ -195,7 +204,7 @@ export default function Home() {
         description: "Remove an image to add a new one.",
         variant: "destructive",
       });
-      return prevUrls;
+      return prevUrls; // Return original URLs if no slot was found
     });
   }, [toast, imageFileNames]); // Added imageFileNames to dependency array
 
@@ -255,6 +264,7 @@ export default function Home() {
       });
       console.log('AI comparison completed, result:', result);
 
+      // Check if the result or its differences property is valid
       if (!result || !Array.isArray(result.differences)) {
         console.error('Invalid result structure from AI:', result);
         setErrorMessage('Received an invalid response from the AI analysis.');
@@ -270,8 +280,11 @@ export default function Home() {
       }
 
     } catch (error: any) {
+        // This catch block will handle errors thrown from ensureDataUri or compareImages
         console.error("Error during image comparison in page.tsx:", error);
         let errorDesc = 'An unexpected error occurred during analysis.';
+
+        // Try to provide more specific feedback based on the error message
         if (error instanceof Error) {
             if (error.message.includes('Network/API Key Issue suspected')) {
                 errorDesc = 'Failed to connect to the AI service. Please check your network connection and API key.';
@@ -282,7 +295,8 @@ export default function Home() {
             } else if (error.message.includes('Invalid API Key')) {
                 errorDesc = 'Invalid API Key provided. Please check configuration.';
             } else if (error.message.includes('AI comparison failed')) {
-                errorDesc = error.message; // Use the message directly if it's from our flow wrapper
+                // This means the error was already somewhat formatted by the flow wrapper
+                errorDesc = error.message; 
             } else {
                 errorDesc = `Details: ${error.message}`; // Generic fallback for other Error instances
             }
@@ -295,7 +309,7 @@ export default function Home() {
             title: "Analysis Failed",
             description: errorDesc,
             variant: "destructive",
-            duration: 9000,
+            duration: 9000, // Longer duration for important errors
         });
         setAnalysisDifferences(null); // Clear any old results
         setShowResultsPopup(false);  // Ensure popup is hidden on error
@@ -312,6 +326,7 @@ export default function Home() {
     setAnalysisDifferences(null);
     setShowResultsPopup(false);
     setErrorMessage(null);
+    // Reset file input values if refs are current
     if (fileInputRef1.current) fileInputRef1.current.value = "";
     if (fileInputRef2.current) fileInputRef2.current.value = "";
     console.log("Application state reset.");
@@ -322,7 +337,7 @@ export default function Home() {
     e.preventDefault();
     e.stopPropagation();
     setIsDraggingOver(prev => {
-      const newState: [boolean, boolean] = [...prev];
+      const newState: [boolean, boolean] = [...prev]; // Create a mutable copy
       newState[index] = true;
       return newState;
     });
@@ -332,7 +347,7 @@ export default function Home() {
     e.preventDefault();
     e.stopPropagation();
     setIsDraggingOver(prev => {
-      const newState: [boolean, boolean] = [...prev];
+      const newState: [boolean, boolean] = [...prev]; // Create a mutable copy
       newState[index] = false;
       return newState;
     });
@@ -393,6 +408,7 @@ export default function Home() {
     }
   };
 
+  // Determine button visibility
   const showCompareButton = imageUrls[0] !== null && imageUrls[1] !== null && !isLoading && !showResultsPopup;
   const showResetButton = (imageUrls.some(url => url !== null) || showResultsPopup || errorMessage) && !isLoading;
 
@@ -417,13 +433,16 @@ export default function Home() {
             id="image-upload-box-2"
         />
 
+       {/* Main content area with glassmorphic effect and entrance animation */}
        <div className="glassmorphic p-6 md:p-10 w-full max-w-xl text-center relative animate-fade-slide-in">
+         {/* Conditional rendering for LoadingPopup */}
          {isLoading && !showResultsPopup && imageUrls[0] && imageUrls[1] ? ( 
              <LoadingPopup
-                 imageUrl={imageUrls[0] || 'https://picsum.photos/seed/image1/200/200'} 
+                 imageUrl={imageUrls[0] || 'https://picsum.photos/seed/image1/200/200'} // Fallback if image1 is somehow null during loading
                  message={"Magic is happening..."}
              />
          ) : (
+             // Main UI when not loading
              <>
                  <h1 className="text-3xl md:text-4xl font-bold mb-6 text-foreground">
                    Spot the Difference AI ✨
@@ -432,6 +451,7 @@ export default function Home() {
                    Drop, upload, or capture two images. Our AI will find the changes!
                  </p>
 
+                 {/* Grid for image selection boxes */}
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                      {[0, 1].map((index) => (
                          <div
@@ -450,15 +470,17 @@ export default function Home() {
                              tabIndex={imageUrls[index] === null ? 0 : -1}
                          >
                              {imageUrls[index] ? (
+                                 // Display selected image
                                  <>
                                      <Image
-                                         src={imageUrls[index]!}
+                                         src={imageUrls[index]!} // Non-null assertion as it's checked
                                          alt={`Selected image ${index + 1}`}
                                          width={150}
                                          height={150}
                                          className="object-contain rounded-md mb-3 shadow-md max-h-[calc(100%-2.5rem)]" // Ensure image fits
                                          data-ai-hint="comparison target"
                                          onError={(e) => {
+                                             // Handle image load error
                                              console.error(`Error loading image ${index + 1} preview:`, e);
                                              toast({ title: "Image Load Error", description: `Could not display image ${index + 1}. It might be corrupted.`, variant: "destructive" });
                                              handleRemoveImage(index);
@@ -481,6 +503,7 @@ export default function Home() {
                                      </Button>
                                  </>
                              ) : (
+                                 // Placeholder for empty image box
                                  <div className="text-center text-muted-foreground group-hover:text-accent transition-colors pointer-events-none flex flex-col items-center justify-center">
                                      <ImageIconLucide className="h-12 w-12 mx-auto mb-2 text-foreground/30 group-hover:text-accent transition-colors" />
                                      <p className="font-semibold">Image {index + 1}</p>
@@ -492,6 +515,7 @@ export default function Home() {
                      ))}
                  </div>
                 
+                 {/* ImageSelector component for camera/upload buttons */}
                  <ImageSelector
                      onImageSelect={handleImageSelect} // The ImageSelector will call this with the targetIndex from its internal logic if needed or let it find the first empty slot.
                      disabled={imageUrls[0] !== null && imageUrls[1] !== null} // Disable if both slots are full
@@ -499,13 +523,15 @@ export default function Home() {
                  />
 
 
+                 {/* Display error messages */}
                  {errorMessage && (
                      <p className="mt-4 text-sm text-destructive dark:text-red-400 font-medium">
                          {errorMessage}
                      </p>
                  )}
 
-                 <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center items-center w-full">
+                 {/* Action buttons: Compare and Reset */}
+                 <div className="mt-8 flex flex-col gap-4 justify-center items-center w-full">
                      {showCompareButton && (
                          <Button
                              onClick={handleCompareImages}
@@ -530,10 +556,11 @@ export default function Home() {
          )}
        </div>
 
+       {/* Results Popup */}
        {analysisDifferences !== null && imageUrls[0] && imageUrls[1] && (
            <ResultsPopup
                results={analysisDifferences}
-               onClose={handleReset} 
+               onClose={handleReset} // Reset the app when popup is closed
                image1Url={imageUrls[0]}
                image2Url={imageUrls[1]}
                open={showResultsPopup} 
@@ -543,3 +570,4 @@ export default function Home() {
      </main>
   );
 }
+

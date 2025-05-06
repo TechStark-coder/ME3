@@ -4,81 +4,74 @@ import React from 'react';
 interface CustomLogoProps extends React.SVGProps<SVGSVGElement> {}
 
 const CustomLogo: React.FC<CustomLogoProps> = (props) => {
-  const mgOrange = "#F57C00"; // Magnifying glass orange
-  const cameraBody = "#FFE0B2"; // Light peach/beige for camera body
-  const lensOuterTeal = "#0097A7"; // Darker teal for lens outer ring
-  const lensInnerGreen = "#4CAF50"; // Green for lens inner part
-  const cloudBlue = "#B2EBF2"; // Light cyan/blue for cloud shapes
-  const textNavy = "#1A237E"; // Dark navy blue for "Ai Image Compare" text
-  const highlightWhite = "#FFFFFF"; // For highlights and text outline
-  const cameraTopOrange = "#FB8C00"; // Slightly lighter orange for camera top detail/button
+  // Define colors from the provided image
+  const tealColor = "#00FFFF"; // Cyan/Teal for lines and accents
+  const whiteColor = "#FFFFFF"; // White for text and highlights
+  const darkGrayHandle = "#4A4A4A"; // A dark gray for the magnifying glass handle, assuming it's not pure black
 
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 220 185" // Adjusted viewBox for new design, height increased slightly for text
+      viewBox="0 0 200 200" // Adjusted viewBox to fit the design
+      // width="100" // Example width, will be controlled by className in AppHeader
+      // height="100" // Example height
       {...props}
     >
-      <g id="logo-background-elements">
-        {/* Simplified Cloud Shapes */}
-        <path d="M25,95 Q35,65 60,75 T95,90 Q85,115 60,105 T25,95 Z" fill={cloudBlue} opacity="0.7" />
-        <path d="M125,90 Q135,60 160,70 T195,85 Q185,110 160,100 T125,90 Z" fill={cloudBlue} opacity="0.7" />
-        
-        {/* Sparkle top-left area (simplified star) */}
-        <polygon points="45,50 48,60 58,63 48,66 45,76 42,66 32,63 42,60" fill={highlightWhite} />
+      {/* Background rectangle - if the logo itself needs a black background independent of the page */}
+      {/* <rect width="200" height="200" fill="#000000" /> */}
+
+      {/* Stylized circuit lines on the left */}
+      <line x1="30" y1="20" x2="30" y2="180" stroke={tealColor} strokeWidth="4" />
+      <circle cx="30" cy="20" r="6" fill={tealColor} />
+      <rect x="26" y="60" width="8" height="8" fill={tealColor} />
+      <rect x="26" y="100" width="8" height="8" fill={tealColor} />
+      <rect x="26" y="140" width="8" height="8" fill={tealColor} />
+
+      {/* Horizontal circuit lines below magnifying glass */}
+      <line x1="30" y1="150" x2="100" y2="150" stroke={tealColor} strokeWidth="3" />
+      <line x1="40" y1="155" x2="90" y2="155" stroke={tealColor} strokeWidth="2" />
+      <line x1="40" y1="145" x2="90" y2="145" stroke={tealColor} strokeWidth="2" />
+      <circle cx="100" cy="150" r="4" fill={tealColor} />
+
+
+      {/* Magnifying glass */}
+      <g transform="translate(10, 25)">
+        <circle cx="100" cy="75" r="45" stroke={whiteColor} strokeWidth="5" fill="rgba(255,255,255,0.1)" />
+        {/* Lens details (subtle inner lines/reflections if desired) - simplified */}
+        <circle cx="100" cy="75" r="35" stroke={whiteColor} strokeWidth="1" opacity="0.3" />
+        <path d="M135 110 L165 140" stroke={darkGrayHandle} strokeWidth="10" strokeLinecap="round" />
+         {/* Inner "camera shutter" like lines - very simplified */}
+        <path d="M100,40 Q80,75 100,110" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" fill="none" />
+        <path d="M70,55 Q100,65 130,55" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" fill="none" />
+         <path d="M70,95 Q100,85 130,95" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" fill="none" />
       </g>
       
-      <g id="magnifying-glass-and-camera">
-        {/* Magnifying Glass Ring */}
-        {/* Fill with a very light transparent color to simulate the lens glass if needed, or keep transparent */}
-        <circle cx="110" cy="80" r="50" stroke={mgOrange} strokeWidth="12" fill="rgba(255,255,255,0.1)" /> 
-        
-        {/* Camera Body */}
-        <rect x="80" y="55" width="60" height="40" rx="5" ry="5" fill={cameraBody} />
-        {/* Camera Lens Assembly */}
-        <circle cx="110" cy="75" r="15" fill={lensOuterTeal} /> {/* Outer ring of lens */}
-        <circle cx="110" cy="75" r="9" fill={lensInnerGreen} /> {/* Inner part of lens */}
-        <circle cx="104" cy="72" r="3" fill={highlightWhite} opacity="0.8" /> {/* Lens highlight */}
-        {/* Camera Top detail / Button */}
-        <rect x="95" y="48" width="30" height="7" rx="2" ry="2" fill={cameraTopOrange} />
-         {/* Tiny dots on camera sides (simplified) */}
-        <circle cx="75" cy="90" r="1.5" fill={lensOuterTeal} />
-        <circle cx="145" cy="90" r="1.5" fill={lensOuterTeal} />
+      {/* Text "AI IMAGE" */}
+      <text
+        x="115" // Centered based on approximate visual center of text block
+        y="150" // Positioned below the circuit lines
+        fontFamily="Arial, Helvetica, sans-serif" // A common sans-serif font
+        fontSize="20" // Adjust size as needed
+        fontWeight="bold"
+        fill={whiteColor}
+        textAnchor="middle"
+      >
+        AI IMAGE
+      </text>
 
-        {/* Magnifying Glass Handle */}
-        <path d="M145,115 L175,145 A5,5 0 0,1 170,152 L140,122 A5,5 0 0,1 145,115 Z" fill={mgOrange} />
-      </g>
-
-      <g id="logo-text">
-        {/* AI IMAGE text */}
-        <text 
-          x="110" 
-          y="155"  // Positioned below the magnifying glass
-          fontFamily="Arial, 'Helvetica Neue', Helvetica, sans-serif" 
-          fontSize="28" 
-          fontWeight="bold" 
-          textAnchor="middle" 
-          fill={textNavy}
-          stroke={highlightWhite} // White outline
-          strokeWidth="0.5" // Thin outline
-        >
-          Ai Image
-        </text>
-        {/* COMPARE text */}
-        <text 
-          x="110" 
-          y="180" // Second line of text
-          fontFamily="Arial, 'Helvetica Neue', Helvetica, sans-serif" 
-          fontSize="28" 
-          fontWeight="bold" 
-          textAnchor="middle" 
-          fill={textNavy}
-          stroke={highlightWhite} // White outline
-          strokeWidth="0.5" // Thin outline
-        >
-          Compare
-        </text>
-      </g>
+      {/* Text "Compare" - script-like font is hard to replicate perfectly in SVG without font embedding */}
+      {/* Using a common cursive or a more stylized sans-serif as a fallback */}
+      <text
+        x="115" // Centered
+        y="175" // Below "AI IMAGE"
+        fontFamily="'Brush Script MT', 'Comic Sans MS', cursive, sans-serif" // Font stack for cursive effect
+        fontSize="24" // Adjust size
+        fontWeight="bold" // Script fonts often look better bold or normal, adjust as needed
+        fill={whiteColor}
+        textAnchor="middle"
+      >
+        Compare
+      </text>
     </svg>
   );
 };
