@@ -26,7 +26,7 @@ const AnalyzeImageObjectsOutputSchema = z.object({
   objects: z
     .array(z.string())
     .describe(
-      'A list of distinct objects identified in the image. Each item should be a concise name of an object (e.g., "Cat", "Laptop", "Coffee Mug", "Red Apple").'
+      'A comprehensive list of distinct objects identified in the image. Each item should be a concise name of an object (e.g., "Cat", "Laptop", "Coffee Mug", "Small red toy car on shelf", "Blue figurine on the right"). Be as detailed and exhaustive as possible.'
     ),
 });
 export type AnalyzeImageObjectsOutput = z.infer<typeof AnalyzeImageObjectsOutputSchema>;
@@ -74,9 +74,22 @@ const analyzeImageObjectsPrompt = ai.definePrompt({
   output: {
     schema: AnalyzeImageObjectsOutputSchema,
   },
-  prompt: `You are an expert image analysis AI. Your task is to carefully examine the provided image and identify all distinct, clearly visible objects.
-For each object, provide its common name. Be specific where appropriate (e.g., "red toy car" instead of just "car" if color and type are clear).
-List only the names of the objects.
+  prompt: `You are an extremely meticulous and detail-oriented image analysis AI. Your primary task is to carefully examine the provided image and identify **EVERY SINGLE** distinct, clearly visible object, no matter how small or seemingly insignificant.
+
+Pay close attention to:
+- Main subjects: People, animals, large items.
+- Background elements: Furniture, wall decorations, scenery, buildings.
+- Foreground elements: Items on tables, floors, or held by subjects.
+- **Small details:** Individual items on shelves (like figurines, books, toys), items on desks, tools, accessories, patterns, textures, and even specific parts of larger objects if they are distinct (e.g., "computer mouse" not just "computer accessories").
+- Decorative items: Vases, picture frames, sculptures, plants.
+- Clothing details: Hats, shoes, specific accessories if clearly identifiable.
+
+For each object identified, provide its common name. Be as specific as possible regarding color, type, or any distinguishing features (e.g., "small red toy car on the top shelf", "blue ceramic coffee mug with a white handle", "silver laptop computer", "collection of colorful figurines on the dark brown shelf").
+
+**Your goal is to be exhaustive.** Do not overlook small or background items. List every object you can confidently identify.
+If there are multiple similar items, list them individually if they are distinct or as a group if appropriate (e.g., "three green apples" or "stack of books").
+
+List only the names of the objects in your response.
 
 Image to analyze:
 {{media url=imageDataUri}}
@@ -116,3 +129,4 @@ const analyzeImageObjectsFlow = ai.defineFlow<
     return output;
   }
 );
+
