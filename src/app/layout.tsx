@@ -6,7 +6,7 @@ import CursorLightEffect from '@/components/cursor-light-effect';
 import AppHeader from '@/components/app-header'; // Import AppHeader
 
 export const metadata: Metadata = {
-  title: 'ImageCanvas', // Updated title to ImageCanvas
+  title: 'SameSameButDifferent', // Updated title
   description: 'Upload or capture images and let AI analyze them.', // Updated description
 };
 
@@ -26,3 +26,4 @@ export default function RootLayout({
     </html>
   );
 }
+
