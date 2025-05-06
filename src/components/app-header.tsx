@@ -11,15 +11,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Image as ImageIcon, Sparkles, Bot } from "lucide-react"; // ImageIcon, Sparkles remain, Bot added
+import { Image as ImageIcon, Sparkles } from "lucide-react"; 
+import CustomLogo from './custom-logo'; // Import the new CustomLogo
 
 const AppHeader = () => {
   return (
-    <header className="sticky top-0 z-50 w-full bg-transparent"> {/* Updated to bg-transparent */}
+    <header className="sticky top-0 z-50 w-full bg-transparent">
       <div className="container flex h-14 max-w-screen-2xl items-center justify-between">
         <Link href="/" className="flex items-center space-x-2">
-          {/* Replaced custom SVG with Bot icon from lucide-react */}
-          <Bot className="h-6 w-6 text-primary" />
+          <CustomLogo className="h-8 w-8 text-primary" /> {/* Use CustomLogo and adjust size if needed */}
           <span className="font-bold inline-block text-primary">SameSameButDifferent</span>
         </Link>
         
@@ -50,4 +50,3 @@ const AppHeader = () => {
 };
 
 export default AppHeader;
-
