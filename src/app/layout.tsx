@@ -1,13 +1,13 @@
 
 import type { Metadata } from 'next';
-// Removed Geist fonts as per globals.css change
 import './globals.css';
-import { Toaster } from "@/components/ui/toaster"; // Import Toaster
-import CursorLightEffect from '@/components/cursor-light-effect'; // Import CursorLightEffect
+import { Toaster } from "@/components/ui/toaster";
+import CursorLightEffect from '@/components/cursor-light-effect';
+import AppHeader from '@/components/app-header'; // Import AppHeader
 
 export const metadata: Metadata = {
-  title: 'Spot the Difference AI', // Updated title
-  description: 'Upload or capture two images and let AI find the differences.', // Updated description
+  title: 'ImageCanvas', // Updated title to ImageCanvas
+  description: 'Upload or capture images and let AI analyze them.', // Updated description
 };
 
 export default function RootLayout({
@@ -17,11 +17,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      {/* Removed font variables from body className */}
       <body className={`antialiased`}>
-        <CursorLightEffect /> {/* Add the cursor light effect component */}
+        <CursorLightEffect />
+        <AppHeader /> {/* Add the AppHeader component */}
         {children}
-        <Toaster /> {/* Add Toaster component */}
+        <Toaster />
       </body>
     </html>
   );

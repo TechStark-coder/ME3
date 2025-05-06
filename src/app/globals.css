@@ -5,55 +5,72 @@
 
 /* Define new gradient colors */
 :root {
-  --gradient-start: 163 41% 60%; /* #43C6AC */
-  --gradient-end: 248 59% 21%; /* #191654 */
+  --gradient-start: 163 41% 60%; /* #43C6AC (Tealish Green) */
+  --gradient-end: 248 59% 21%; /* #191654 (Deep Indigo) */
 
-  /* NEW Dark Theme based on gradient */
-  --background: var(--gradient-end); /* Base dark color */
-  --foreground: 0 0% 98%; /* Light text */
-  --card: 248 59% 15%; /* Darker card */
+  /* Theme: Teal Accent on Dark Gradient */
+  /* Background will be the animated gradient from the body */
+  /* Foreground is light for readability on dark gradient */
+  --background: 248 59% 10%; /* Dark base for elements, slightly darker than gradient end */
+  --foreground: 0 0% 98%; /* Light text (almost white) */
+
+  /* Cards and Popovers with Glassmorphism */
+  /* Using a slightly lighter version of the dark base for cards, with some transparency for glass effect */
+  --card: 248 59% 15%; /* Darker card base */
   --card-foreground: 0 0% 98%;
-  --popover: 248 59% 15%;
+  --popover: 248 59% 15%; /* Consistent with card */
   --popover-foreground: 0 0% 98%;
-  --primary: var(--gradient-start); /* Use gradient start as primary */
-  --primary-foreground: 248 59% 10%; /* Dark text on primary */
-  --secondary: 248 59% 25%; /* Slightly lighter dark secondary */
+
+  /* Primary color - Teal (as per ImageCanvas style accent) */
+  --primary: 173 58% 50%; /* Teal - HSL for #008080 is approx 180, 100%, 25% or similar, let's use a brighter teal: 173, 58%, 50% for #33cccc */
+  --primary-foreground: 0 0% 10%; /* Dark text for contrast on Teal */
+
+  /* Secondary color - A muted complement to the dark theme */
+  --secondary: 248 59% 25%; /* Slightly lighter than base background */
   --secondary-foreground: 0 0% 90%; /* Lighter grey text */
-  --muted: 248 59% 25%;
-  --muted-foreground: 0 0% 60%; /* Mid-grey muted text */
-  --accent: 248 59% 30%; /* Slightly lighter dark accent */
-  --accent-foreground: 0 0% 98%;
-  --destructive: 0 70% 55%; /* Slightly adjusted destructive red */
-  --destructive-foreground: 0 0% 98%;
-  --border: 248 59% 35%; /* Visible border on dark bg */
-  --input: 248 59% 35%; /* Input background */
-  --ring: var(--gradient-start); /* Use new primary for ring */
-  --radius: 0.5rem;
 
-  /* Charts based on new primary */
+  /* Muted colors */
+  --muted: 248 59% 25%; /* Same as secondary */
+  --muted-foreground: 0 0% 60%; /* Mid-grey for less emphasis */
+
+  /* Accent color - Could be same as primary or a variation */
+  --accent: var(--primary); /* Teal as accent */
+  --accent-foreground: 0 0% 10%; /* Dark text on teal accent */
+
+  /* Destructive color */
+  --destructive: 0 70% 55%; /* A visible red */
+  --destructive-foreground: 0 0% 98%; /* Light text on red */
+
+  /* Border and Input colors */
+  --border: 248 59% 35%; /* Visible border on dark backgrounds */
+  --input: 248 59% 20%; /* Darker input fields, distinct from card */
+  --ring: var(--primary); /* Teal for focus rings */
+
+  /* Radius for rounded corners */
+  --radius: 0.75rem; /* Slightly more rounded for modern feel */
+
+  /* Charts (using primary teal and variations) */
   --chart-1: var(--primary);
-  --chart-2: 163 50% 70%; /* Lighter variation */
-  --chart-3: 163 35% 50%; /* Darker variation */
-  --chart-4: 170 45% 65%; /* Shifted hue variation */
-  --chart-5: 155 38% 55%; /* Another variation */
+  --chart-2: 173 50% 60%; /* Lighter teal */
+  --chart-3: 173 65% 40%; /* Darker, more saturated teal */
+  --chart-4: 180 45% 55%; /* Slightly different hue of teal/cyan */
+  --chart-5: 170 55% 45%; /* Another teal variation */
 
-
-  /* Sidebar (adjusting for dark theme base) */
-   --sidebar-background: 248 59% 18%; /* Dark sidebar slightly different from main bg */
-   --sidebar-foreground: 0 0% 98%; /* Light text */
-   --sidebar-primary: var(--primary); /* Teal primary */
-   --sidebar-primary-foreground: 248 59% 10%; /* Dark text on primary */
-   --sidebar-accent: 248 59% 28%; /* Dark accent */
-   --sidebar-accent-foreground: 0 0% 98%; /* Light text on accent */
-   --sidebar-border: 248 59% 32%; /* Dark border */
-   --sidebar-ring: var(--primary); /* Teal ring */
+  /* Sidebar (consistent with main theme, teal primary) */
+   --sidebar-background: 248 59% 12%; /* Even darker sidebar */
+   --sidebar-foreground: 0 0% 95%;
+   --sidebar-primary: var(--primary);
+   --sidebar-primary-foreground: var(--primary-foreground);
+   --sidebar-accent: 248 59% 22%;
+   --sidebar-accent-foreground: 0 0% 95%;
+   --sidebar-border: 248 59% 28%;
+   --sidebar-ring: var(--primary);
 
   /* Cursor light effect variables */
   --cursor-x: 50vw;
   --cursor-y: 50vh;
-  --cursor-light-size: 400px;
-   /* Increased alpha from 0.06 to 0.15 for brightness */
-  --cursor-light-color: hsla(0, 0%, 100%, 0.15);
+  --cursor-light-size: 300px; /* Tighter effect */
+  --cursor-light-color: hsla(0, 0%, 100%, 0.12); /* Slightly brighter than before */
 }
 
 /* Define the gradient animation */
@@ -70,60 +87,54 @@ html {
 }
 
 body {
-  /* Changed default font for a more standard look */
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 
   /* Apply animated gradient background */
   background: linear-gradient(135deg, hsl(var(--gradient-start)), hsl(var(--gradient-end)), hsl(var(--gradient-start)));
-  background-size: 200% 200%; /* Make background larger than viewport */
-  animation: gradientAnimation 15s ease infinite; /* Apply animation */
+  background-size: 200% 200%;
+  animation: gradientAnimation 15s ease infinite;
 
-  /* Ensure body takes full height */
   min-height: 100vh;
-  /* Ensure text is readable based on theme variables */
   color: hsl(var(--foreground));
 
-  /* Apply cursor light effect */
-  /* Create a radial gradient centered at the cursor position */
-  /* Adjusted gradient stop from 60% to 40% for tighter effect */
+  /* Apply cursor light effect - ensure it's layered correctly */
   background-image: radial-gradient(
     circle var(--cursor-light-size) at var(--cursor-x) var(--cursor-y),
     var(--cursor-light-color),
-    transparent 40%
+    transparent 60% /* Adjust falloff: from 40% to 60% for softer edge */
   ), linear-gradient(135deg, hsl(var(--gradient-start)), hsl(var(--gradient-end)), hsl(var(--gradient-start)));
   background-attachment: fixed; /* Keep the light fixed relative to the viewport */
 }
 
 @layer base {
-  /* Variables define the dark theme */
   * {
     @apply border-border;
   }
   body {
+    /* text-foreground is already set in :root and applied to body, so this is redundant but harmless */
     @apply text-foreground;
   }
 }
 
-/* Glassmorphism effect adjusted for dark theme */
+/* Glassmorphism effect using HSL variables for consistency */
 @layer utilities {
   .glassmorphic {
-    /* Darker background, adjusted blur and shadow for dark theme */
-    /* Using card color which is darker */
-    @apply bg-card/70 backdrop-blur-lg rounded-xl shadow-2xl border border-white/10; /* Subtle white border */
-    box-shadow: 0 8px 32px 0 hsla(0, 0%, 0%, 0.3); /* Darker shadow */
+    /* background uses card color with alpha for the frosted effect */
+    @apply bg-card/75 backdrop-blur-lg rounded-xl shadow-2xl border border-white/10; /* Subtle white border */
+    /* Slightly darker shadow for better depth on the new gradient */
+    box-shadow: 0 8px 32px 0 hsla(var(--gradient-end), 0.37);
   }
 }
 
-/* Sparkle animation - use a contrasting color like light gray/white */
+/* Sparkle animation */
 @layer utilities {
   @keyframes sparkle {
-    0%, 100% { opacity: 0.8; transform: scale(1) translate(-50%, -50%) rotate(0deg); }
-    50% { opacity: 0.4; transform: scale(1.4) translate(-50%, -50%) rotate(15deg); }
+    0%, 100% { opacity: 0.9; transform: scale(1) translate(-50%, -50%) rotate(0deg); } /* Brighter */
+    50% { opacity: 0.5; transform: scale(1.5) translate(-50%, -50%) rotate(15deg); } /* More scale */
   }
   .animate-sparkle {
-    animation: sparkle 2s infinite ease-in-out; /* Slightly slower */
-     /* Use foreground color (light) */
-     color: hsl(var(--foreground) / 0.8); /* More opaque */
+    animation: sparkle 1.8s infinite ease-in-out; /* Slightly faster */
+     color: hsl(var(--foreground) / 0.9); /* More opaque */
   }
 }
 
@@ -132,7 +143,7 @@ body {
   @keyframes fade-slide-in {
     from {
       opacity: 0;
-      transform: translateY(20px);
+      transform: translateY(25px); /* Slightly more travel */
     }
     to {
       opacity: 1;
@@ -140,7 +151,6 @@ body {
     }
   }
   .animate-fade-slide-in {
-    animation: fade-slide-in 0.6s ease-out forwards; /* Slightly slower */
+    animation: fade-slide-in 0.7s ease-out forwards; /* Slightly slower for smoother feel */
   }
 }
-
