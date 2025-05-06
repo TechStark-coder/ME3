@@ -19,7 +19,8 @@ const AppHeader = () => {
     <header className="sticky top-0 z-50 w-full bg-transparent">
       <div className="container flex h-14 max-w-screen-2xl items-center justify-between">
         <Link href="/" className="flex items-center space-x-2">
-          <CustomLogo className="h-8 w-8 text-primary" /> {/* Use CustomLogo and adjust size if needed */}
+          {/* Increased logo size for better visibility of text */}
+          <CustomLogo className="h-10 w-auto md:h-12 text-primary" /> 
           <span className="font-bold inline-block text-primary">SameSameButDifferent</span>
         </Link>
         
