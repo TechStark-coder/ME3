@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,18 +12,58 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { RefreshCw, CheckCircle, XCircle, Info } from 'lucide-react'; // Added Info icon
+import { RefreshCw, CheckCircle, XCircle, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+interface TypewriterProps {
+  text: string;
+  speed?: number;
+  className?: string;
+  onComplete?: () => void;
+  startCondition?: boolean; // Only start typing when true
+}
+
+const Typewriter: React.FC<TypewriterProps> = ({ text, speed = 30, className, onComplete, startCondition = true }) => {
+  const [displayText, setDisplayText] = useState('');
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    // Reset only if text changes or startCondition becomes false then true again
+    if (startCondition) {
+        setDisplayText('');
+        setCurrentIndex(0);
+    }
+  }, [text, startCondition]);
+
+  useEffect(() => {
+    if (startCondition && currentIndex < text.length) {
+      const timeoutId = setTimeout(() => {
+        setDisplayText((prev) => prev + text[currentIndex]);
+        setCurrentIndex((prev) => prev + 1);
+      }, speed);
+      return () => clearTimeout(timeoutId);
+    } else if (startCondition && currentIndex === text.length && text.length > 0) {
+        onComplete?.();
+    }
+  }, [currentIndex, text, speed, onComplete, startCondition]);
+
+  // If not started, display nothing or placeholder
+  return startCondition ? <span className={className}>{displayText}</span> : <span className={className}>&nbsp;</span>;
+};
+
 
 interface ResultsPopupProps {
   results: string[];
   onClose: () => void;
   image1Url: string;
-  image2Url: string; // Keep for Spot the Difference, can be same as image1Url for single analysis
+  image2Url: string; 
   open: boolean;
   setOpen: (open: boolean) => void;
-  titleOverride?: string; // Optional title for different contexts
-  descriptionOverride?: string; // Optional description
+  titleOverride?: string; 
+  descriptionOverride?: string;
+  isSingleImageAnalysis?: boolean; // Added for context
+  currentlyTypingIndex?: number | null; // Index of the item currently being typed
+  onTypingComplete?: (index: number) => void; // Callback when an item finishes typing
 }
 
 const ResultsPopup: React.FC<ResultsPopupProps> = ({
@@ -35,14 +75,25 @@ const ResultsPopup: React.FC<ResultsPopupProps> = ({
   setOpen,
   titleOverride,
   descriptionOverride,
+  isSingleImageAnalysis = false, // Default to false (spot the difference)
+  currentlyTypingIndex,
+  onTypingComplete,
 }) => {
   const handleClose = () => {
     setOpen(false);
     onClose();
   };
 
-  const hasResults = results.length > 0 && results[0] !== "AI analysis returned no result." && results[0] !== "AI output format error." && results[0] !== "AI analysis returned no result for objects." && results[0] !== "AI output format error for objects.";
-  const isSingleImageAnalysis = image1Url === image2Url; // Heuristic to detect single image mode
+  const noMeaningfulResults = 
+    results.length === 0 || 
+    results.every(r => 
+      r === "AI analysis returned no result." || 
+      r === "AI output format error." || 
+      r === "AI analysis returned no result for objects." || 
+      r === "AI output format error for objects."
+    );
+
+  const hasResults = !noMeaningfulResults;
 
   const defaultTitle = hasResults ? "Analysis Complete" : "Analysis Result";
   const defaultDescription = hasResults
@@ -52,23 +103,23 @@ const ResultsPopup: React.FC<ResultsPopupProps> = ({
   const displayTitle = titleOverride || defaultTitle;
   const displayDescription = descriptionOverride || defaultDescription;
 
-  let IconComponent = Info; // Default icon
-  if (titleOverride) { // If custom title, use Info or a specific icon based on context
+  let IconComponent = Info;
+  if (titleOverride && isSingleImageAnalysis) { // Specific for single image analysis with override
     IconComponent = hasResults ? CheckCircle : XCircle;
-  } else { // For default spot-the-difference
+  } else { // Default for spot-the-difference or if no override for single
     IconComponent = hasResults ? CheckCircle : XCircle;
   }
 
 
   return (
     <AlertDialog open={open} onOpenChange={(isOpen) => { if (!isOpen) handleClose(); else setOpen(true);}}>
-      <AlertDialogContent className="glassmorphic max-w-lg w-[90vw] md:w-full">
+      <AlertDialogContent className="glassmorphic max-w-lg w-[90vw] md:w-full transform transition-all duration-500 ease-out data-[state=open]:scale-100 data-[state=closed]:scale-95 data-[state=open]:opacity-100 data-[state=closed]:opacity-0">
         <AlertDialogHeader>
           <AlertDialogTitle className="text-center text-2xl font-bold text-foreground flex items-center justify-center gap-2">
             <IconComponent 
               className={cn(
                 "h-6 w-6",
-                hasResults && titleOverride ? "text-primary" : // Specific color for identified objects
+                hasResults && isSingleImageAnalysis ? "text-primary" : 
                 hasResults ? "text-green-500" : 
                 "text-orange-500" 
               )} 
@@ -124,12 +175,21 @@ const ResultsPopup: React.FC<ResultsPopupProps> = ({
             <h3 className="text-lg font-semibold mb-2 text-center text-foreground">
               {isSingleImageAnalysis ? "Identified Items:" : "Details:"}
             </h3>
-            <ScrollArea className="h-40 max-h-[30vh] w-full rounded-md border border-border/50 p-3 bg-background/70">
-              <ul className="space-y-1.5 text-sm text-foreground">
+            <ScrollArea className="h-60 max-h-[40vh] w-full rounded-md border border-border/50 p-3 bg-background/70">
+              <ul className="space-y-2 text-sm text-foreground">
                 {results.map((item, index) => (
-                  <li key={index} className="font-medium flex items-start gap-2 p-1 rounded hover:bg-accent/10">
+                  <li key={index} className="font-medium flex items-start gap-2 p-1.5 rounded hover:bg-accent/10 min-h-[1.5em]"> {/* Ensure min height for typewritter */}
                     <span className="mt-1 text-primary">•</span>
-                    <span>{item}</span>
+                    {isSingleImageAnalysis && onTypingComplete && typeof currentlyTypingIndex === 'number' ? (
+                         <Typewriter
+                           text={item}
+                           className="flex-1"
+                           startCondition={index <= currentlyTypingIndex}
+                           onComplete={() => onTypingComplete(index)}
+                         />
+                    ) : (
+                       <span>{item}</span>
+                    )}
                   </li>
                 ))}
               </ul>

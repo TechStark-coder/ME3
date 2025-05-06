@@ -1,19 +1,18 @@
 
 "use client";
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import ImageSelector from '@/components/image-selector';
 import LoadingPopup from '@/components/loading-popup';
-import ResultsPopup from '@/components/results-popup'; // Reusing for consistency, will adapt props
+import ResultsPopup from '@/components/results-popup';
 import { Button } from '@/components/ui/button';
-import { X, RefreshCw, SearchCheck, Image as ImageIconLucide, ArrowLeft } from 'lucide-react'; // Changed ImageIcon to ImageIconLucide
+import { X, RefreshCw, SearchCheck, Image as ImageIconLucide, ArrowLeft } from 'lucide-react';
 import Image from 'next/image';
-import Link from 'next/link'; // Import Link
-import { analyzeImageObjects } from '@/ai/flows/analyze-single-image-flow'; // New flow
+import Link from 'next/link';
+import { analyzeImageObjects } from '@/ai/flows/analyze-single-image-flow';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 
-// Helper function to read file as Data URL (can be moved to a utils file later)
 const readFileAsDataURL = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -29,7 +28,6 @@ const readFileAsDataURL = (file: File): Promise<string> => {
   });
 };
 
-// Helper to ensure data URI (can be moved to utils)
 async function ensureDataUri(url: string | null, toast: ReturnType<typeof useToast>['toast']): Promise<string | null> {
     if (!url) return null;
     if (url.startsWith('data:')) return url;
@@ -49,7 +47,7 @@ async function ensureDataUri(url: string | null, toast: ReturnType<typeof useToa
                 reader.onerror = reject;
                 reader.readAsDataURL(blob);
             });
-            URL.revokeObjectURL(url); // Clean up blob URL
+            URL.revokeObjectURL(url); 
             return dataUri;
         } catch (error) {
             console.error("Error converting blob URL to data URI:", error);
@@ -61,9 +59,44 @@ async function ensureDataUri(url: string | null, toast: ReturnType<typeof useToa
             return null;
         }
     }
-    toast({ title: "Invalid Image", description: "Please provide a valid image.", variant: "destructive" });
+    toast({ 
+        title: "Invalid Image", 
+        description: "Please provide a valid image.", 
+        variant: "destructive" 
+    });
     return null;
 }
+
+interface TypewriterProps {
+  text: string;
+  speed?: number;
+  className?: string;
+  onComplete?: () => void;
+}
+
+const Typewriter: React.FC<TypewriterProps> = ({ text, speed = 50, className, onComplete }) => {
+  const [displayText, setDisplayText] = useState('');
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    setDisplayText('');
+    setCurrentIndex(0);
+  }, [text]);
+
+  useEffect(() => {
+    if (currentIndex < text.length) {
+      const timeoutId = setTimeout(() => {
+        setDisplayText((prev) => prev + text[currentIndex]);
+        setCurrentIndex((prev) => prev + 1);
+      }, speed);
+      return () => clearTimeout(timeoutId);
+    } else if (currentIndex === text.length && text.length > 0) {
+        onComplete?.();
+    }
+  }, [currentIndex, text, speed, onComplete]);
+
+  return <span className={className}>{displayText}</span>;
+};
 
 
 export default function AnalyzeSingleImagePage() {
@@ -76,6 +109,16 @@ export default function AnalyzeSingleImagePage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDraggingOver, setIsDraggingOver] = useState<boolean>(false);
+
+  const [currentlyTypingIndex, setCurrentlyTypingIndex] = useState<number | null>(null);
+
+  const handleTypingComplete = (index: number) => {
+    if (analysisResults && index < analysisResults.length - 1) {
+      setCurrentlyTypingIndex(index + 1);
+    } else {
+      setCurrentlyTypingIndex(null); // All items typed
+    }
+  };
 
   const handleImageSelect = useCallback((dataUrl: string | null, fileName: string = "Image provided") => {
     if (!dataUrl) {
@@ -143,6 +186,9 @@ export default function AnalyzeSingleImagePage() {
         });
       } else {
         setAnalysisResults(result.objects);
+        if (result.objects.length > 0) {
+          setCurrentlyTypingIndex(0); // Start typing first item
+        }
         setShowResultsPopup(true);
       }
 
@@ -173,13 +219,13 @@ export default function AnalyzeSingleImagePage() {
     setAnalysisResults(null);
     setShowResultsPopup(false);
     setErrorMessage(null);
+    setCurrentlyTypingIndex(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
     console.log("Single image analysis page reset.");
   };
 
-  // Drag and Drop Handlers
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -253,7 +299,7 @@ export default function AnalyzeSingleImagePage() {
         ) : (
           <>
             <h1 className="text-3xl md:text-4xl font-bold mb-6 text-foreground">
-              Analyze Single Image 🖼️
+              Analyze Single Image
             </h1>
             <p className="text-muted-foreground mb-8 text-base md:text-lg">
               Upload or capture an image. AI will identify objects within it.
@@ -313,7 +359,7 @@ export default function AnalyzeSingleImagePage() {
             <ImageSelector
               onImageSelect={handleImageSelect}
               disabled={imageUrl !== null}
-              showUploadOption={imageUrl === null} // Show upload via button only if no image in box
+              showUploadOption={imageUrl === null} 
             />
 
             {errorMessage && (
@@ -353,20 +399,20 @@ export default function AnalyzeSingleImagePage() {
       </div>
 
       {analysisResults !== null && imageUrl && (
-        <ResultsPopup // This needs to be adapted or a new one created for single image object list
-          results={analysisResults.length > 0 ? analysisResults : ["No distinct objects identified or AI could not process."]}
+        <ResultsPopup
+          results={analysisResults}
           onClose={handleReset}
-          image1Url={imageUrl} // Pass the single image as image1 for display
-          image2Url={imageUrl} // Pass same image again, or adapt ResultsPopup
+          image1Url={imageUrl}
+          image2Url={imageUrl} 
           open={showResultsPopup}
           setOpen={setShowResultsPopup}
-          // Custom title for this context
           titleOverride={analysisResults.length > 0 ? "Objects Identified" : "Analysis Result"}
           descriptionOverride={analysisResults.length > 0 ? "The following objects were identified in the image:" : "No objects were clearly identified, or the image content was unclear."}
+          currentlyTypingIndex={currentlyTypingIndex}
+          onTypingComplete={handleTypingComplete}
+          isSingleImageAnalysis={true}
         />
       )}
     </main>
   );
 }
-
-    
