@@ -11,7 +11,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 const teamMembers = [
   { name: "Reevan", role: "Dev", imageSrc: "https://picsum.photos/seed/reevan/300/300", imageHint: "man portrait" },
   { name: "Mohammed Sohail", role: "Dev", imageSrc: "https://picsum.photos/seed/sohail/300/300", imageHint: "man profile" },
-  { name: "Asif", role: "Dev", imageSrc: "/asif-dev.jpg", imageHint: "man sunglasses" },
+  // IMPORTANT: The image for Asif is currently a placeholder to ensure something displays.
+  // To use the actual image you provided ('asif-dev.jpg'), please:
+  // 1. Place the 'asif-dev.jpg' file in the 'public' folder at the root of your project.
+  // 2. Change 'imageSrc' below from the "https://picsum.photos/..." URL back to "/asif-dev.jpg".
+  { name: "Asif", role: "Dev", imageSrc: "https://picsum.photos/seed/asifplaceholder/300/300", imageHint: "man sunglasses" },
   { name: "Rahul", role: "Dev", imageSrc: "https://picsum.photos/seed/rahul/300/300", imageHint: "man happy" },
   { name: "Tejas", role: "Tester", imageSrc: "https://picsum.photos/seed/tejas/300/300", imageHint: "man thinking" }
 ];
@@ -44,6 +48,8 @@ export default function MeetTheTeamPage() {
                     objectFit="cover"
                     data-ai-hint={member.imageHint}
                     className="rounded-full"
+                    // Add onError for picsum to see if it's a network issue for placeholder
+                    onError={(e) => console.error(`Error loading image for ${member.name}: ${member.imageSrc}`, e)}
                   />
                 </div>
                 <CardTitle className="text-xl md:text-2xl font-semibold text-neutral-800">{member.name}</CardTitle>
@@ -60,4 +66,3 @@ export default function MeetTheTeamPage() {
     </main>
   );
 }
-
