@@ -20,9 +20,9 @@ export default function MeetTheTeamPage() {
   return (
     <main 
       className="flex min-h-[calc(100vh-3.5rem)] flex-col items-center p-4 md:p-8 relative z-10 bg-cover bg-center bg-no-repeat"
-      // style={{ backgroundImage: "url('/asif2.jpg')" }}
+      // style={{ backgroundImage: "url('/asif2.jpg')" }} // Background image is handled by globals.css now
     >
-      <div className="w-full max-w-5xl animate-fade-slide-in bg-black/50 backdrop-blur-sm p-6 rounded-lg">
+      <div className="w-full max-w-6xl min-h-[600px] animate-fade-slide-in bg-black/50 backdrop-blur-sm p-6 rounded-lg">
         <div className="flex justify-between items-center mb-10">
             <h1 className="text-3xl md:text-4xl font-bold text-white"> 
                 Meet Our Team
@@ -52,13 +52,13 @@ export default function MeetTheTeamPage() {
                           onError={(e) => {
                               console.error(`Error loading image for ${member.name} from ${member.imageSrc}. This usually means the file is missing or the URL is incorrect. If it's a local file (like '${member.imageSrc}'), ensure it's in the 'public' folder. Attempting fallback...`, e);
                               const target = e.target as HTMLImageElement;
-                              // Specific fallback for Asiff if his specific local image fails
-                              if (member.name === "Asiff" && member.imageSrc === "/asif.jpeg") {
+                              // Specific fallback for Asif if his specific local image fails
+                              if (member.name === "Asif" && member.imageSrc === "/asif.jpeg") {
                                 target.src = 'https://picsum.photos/seed/asif_fallback_dev/300/300';
                                 target.srcset = ''; 
                               } else if (member.imageSrc && !member.imageSrc.startsWith('https://picsum.photos')) {
                                 // Generic fallback for other local images that might fail
-                                target.src = `https://picsum.photos/seed/generic_fallback_${member.name.toLowerCase()}/300/300`;
+                                target.src = `https://picsum.photos/seed/generic_fallback_${member.name.toLowerCase().replace(/\s/g, '_')}/300/300`;
                                 target.srcset = '';
                               } else {
                                 // Fallback for picsum URLs themselves if they error for some reason
@@ -78,22 +78,22 @@ export default function MeetTheTeamPage() {
                 </div>
                 <div className="flip-card-back bg-neutral-50/90 border-neutral-200/50">
                   <Image
-                    src={member.backImageSrc || "/team-card-back.jpg"} // Default back image if not specified
+                    src={member.backImageSrc || "/asif2.jpg"} // Default back image if not specified
                     alt={`Details for ${member.name}`}
                     layout="fill"
-                    objectFit="contain"
+                    objectFit="contain" 
                     data-ai-hint={member.backImageHint || "fun image"}
-                    className="rounded-lg"
+                    className="rounded-lg p-2" // Added padding to prevent image touching edges
                      onError={(e) => {
-                              console.error(`Error loading back image for ${member.name} from ${member.backImageSrc}. Ensure this file exists in the 'public' directory and the filename (including extension and case) is an exact match. Attempting fallback...`, e);
+                              console.error(`Error loading back image for ${member.name} from ${member.backImageSrc || "/asif2.jpg"}. Ensure this file exists in the 'public' directory and the filename (including extension and case) is an exact match. Attempting fallback...`, e);
                               const target = e.target as HTMLImageElement;
-                              // Specific fallback for Asiff's back image if it's the known one that fails
-                              if (member.name === "Asiff" && member.backImageSrc === "/asif2.jpg") {
-                                target.src = 'https://picsum.photos/seed/fallback_back_asiff_specific/300/400';
+                              // Specific fallback for Asif's back image if it's the known one that fails
+                              if (member.name === "Asif" && (member.backImageSrc === "/asif2.jpg" || !member.backImageSrc)) {
+                                target.src = 'https://picsum.photos/seed/fallback_back_asif_specific/300/400';
                                 target.srcset = ''; 
                               } else if (member.backImageSrc && !member.backImageSrc.startsWith('https://picsum.photos')) {
                                 // Fallback for any other local back images that might fail
-                                target.src = `https://picsum.photos/seed/fallback_back_other_local_${member.name.toLowerCase()}/300/400`;
+                                target.src = `https://picsum.photos/seed/fallback_back_other_local_${member.name.toLowerCase().replace(/\s/g, '_')}/300/400`;
                                 target.srcset = ''; 
                               } else {
                                 // Fallback for picsum URLs themselves if they error
