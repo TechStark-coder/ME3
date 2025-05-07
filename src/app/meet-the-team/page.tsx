@@ -10,17 +10,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 
 const teamMembers = [
   { name: "Reevan", role: "Dev", imageSrc: "/reevan.jpeg", imageHint: "man portrait", backImageSrc: "/reevan2.jpg", backImageHint: "abstract pattern" },
-  { name: "Mohammed Sohail", role: "Dev", imageSrc: "/sohail.jpeg", imageHint: "man profile", backImageSrc: "/sohail2.jpg", backImageHint: "geometric design" },
-  { name: "Asiff", role: "Dev", imageSrc: "/asif.jpeg", imageHint: "man sunglasses", backImageSrc: "/asif2.jpg", backImageHint: "team logo" },
+  { name: "Mohammed Sohail", role: "Dev", imageSrc: "/sohail-1.jpeg", imageHint: "man profile", backImageSrc: "/sohail-2.jpg", backImageHint: "geometric design" },
+  { name: "Asif", role: "Dev", imageSrc: "/asif.jpeg", imageHint: "man sunglasses", backImageSrc: "/asif2.jpg", backImageHint: "team logo" },
   { name: "Rahul", role: "Dev", imageSrc: "/rahul.jpeg", imageHint: "man happy", backImageSrc: "/rahul2.jpg", backImageHint: "nature scene" },
-  { name: "Tejas", role: "Tester", imageSrc: "/tejas.jpeg", imageHint: "man thinking", backImageSrc: "/tejas2.jpg", backImageHint: "tech background" }
+  { name: "Tejas", role: "Tester", imageSrc: "/tejas.jpeg", imageHint: "man thinking", backImageSrc: "/tejas-2.jpg", backImageHint: "tech background" }
 ];
 
 export default function MeetTheTeamPage() {
   return (
     <main 
       className="flex min-h-[calc(100vh-3.5rem)] flex-col items-center p-4 md:p-8 relative z-10 bg-cover bg-center bg-no-repeat"
-      style={{ backgroundImage: "url('/asif2.jpg')" }}
+      // style={{ backgroundImage: "url('/asif2.jpg')" }}
     >
       <div className="w-full max-w-5xl animate-fade-slide-in bg-black/50 backdrop-blur-sm p-6 rounded-lg">
         <div className="flex justify-between items-center mb-10">
