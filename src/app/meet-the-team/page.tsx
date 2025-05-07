@@ -9,11 +9,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 const teamMembers = [
-  { name: "Reevan", role: "Dev", imageSrc: "https://picsum.photos/seed/reevan/300/300", imageHint: "man portrait", backImageSrc: "/team-card-back.jpg" },
-  { name: "Mohammed Sohail", role: "Dev", imageSrc: "https://picsum.photos/seed/sohail/300/300", imageHint: "man profile", backImageSrc: "/team-card-back.jpg" },
-  { name: "Asiff", role: "Dev", imageSrc: "/asif-dev.jpeg", imageHint: "man sunglasses", backImageSrc: "/team-card-back.jpg" },
-  { name: "Rahul", role: "Dev", imageSrc: "https://picsum.photos/seed/rahul/300/300", imageHint: "man happy", backImageSrc: "/team-card-back.jpg" },
-  { name: "Tejas", role: "Tester", imageSrc: "https://picsum.photos/seed/tejas/300/300", imageHint: "man thinking", backImageSrc: "/team-card-back.jpg" }
+  { name: "Reevan", role: "Dev", imageSrc: "https://picsum.photos/seed/reevan/300/300", imageHint: "man portrait", backImageSrc: "https://picsum.photos/seed/card_back_reevan/300/400" },
+  { name: "Mohammed Sohail", role: "Dev", imageSrc: "https://picsum.photos/seed/sohail/300/300", imageHint: "man profile", backImageSrc: "https://picsum.photos/seed/card_back_sohail/300/400" },
+  { name: "Asiff", role: "Dev", imageSrc: "/asif-dev.jpeg", imageHint: "man sunglasses", backImageSrc: "https://picsum.photos/seed/card_back_asiff/300/400" },
+  { name: "Rahul", role: "Dev", imageSrc: "https://picsum.photos/seed/rahul/300/300", imageHint: "man happy", backImageSrc: "https://picsum.photos/seed/card_back_rahul/300/400" },
+  { name: "Tejas", role: "Tester", imageSrc: "https://picsum.photos/seed/tejas/300/300", imageHint: "man thinking", backImageSrc: "https://picsum.photos/seed/card_back_tejas/300/400" }
 ];
 
 export default function MeetTheTeamPage() {
@@ -79,7 +79,7 @@ export default function MeetTheTeamPage() {
                      onError={(e) => {
                               console.error(`Error loading back image for ${member.name} from ${member.backImageSrc}.`, e);
                               const target = e.target as HTMLImageElement;
-                              target.src = 'https://picsum.photos/seed/fallback_back/300/400'; // Generic fallback for back image
+                              target.src = 'https://picsum.photos/seed/fallback_back_generic/300/400'; // Generic fallback for back image
                               target.srcset = '';
                           }}
                   />
