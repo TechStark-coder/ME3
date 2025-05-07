@@ -20,15 +20,14 @@ export default function MeetTheTeamPage() {
   return (
     <main 
       className="flex min-h-[calc(100vh-3.5rem)] flex-col items-center p-4 md:p-8 relative z-10 bg-cover bg-center bg-no-repeat"
-      // style={{ backgroundImage: "url('/asif2.jpg')" }} // Background image is handled by globals.css now
     >
-      <div className="w-full max-w-6xl min-h-[600px] animate-fade-slide-in bg-black/50 backdrop-blur-sm p-6 rounded-lg">
+      <div className="w-full max-w-6xl min-h-[70vh] md:min-h-[600px] animate-fade-slide-in bg-black/50 backdrop-blur-sm p-6 rounded-lg">
         <div className="flex justify-between items-center mb-10">
             <h1 className="text-3xl md:text-4xl font-bold text-white"> 
                 Meet Our Team
             </h1>
             <Link href="/" passHref legacyBehavior>
-                <Button variant="outline" className="border-neutral-300 text-neutral-100 hover:bg-neutral-700 hover:border-neutral-400 transition-colors bg-black/30 hover:bg-black/50"> 
+                <Button variant="outline" className="border-border/70 hover:border-foreground transition-colors"> 
                     <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
                 </Button>
             </Link>
