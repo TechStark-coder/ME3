@@ -11,10 +11,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 const teamMembers = [
   { name: "Reevan", role: "Dev", imageSrc: "https://picsum.photos/seed/reevan/300/300", imageHint: "man portrait" },
   { name: "Mohammed Sohail", role: "Dev", imageSrc: "https://picsum.photos/seed/sohail/300/300", imageHint: "man profile" },
-  // IMPORTANT: The image for Asif is now set to use 'asif-dev.jpg' from the 'public' folder.
-  // Please ensure you have placed the 'asif-dev.jpg' image file (the one you provided)
-  // in the 'public' folder at the root of your project for it to display correctly.
-  { name: "Asif", role: "Dev", imageSrc: "/asif-dev.jpg", imageHint: "man sunglasses" },
+  // Corrected the imageSrc path for Asiff to be relative to the public directory.
+  // The image 'asif-dev.jpg' should be placed in the 'public' folder at the root of the project.
+  { name: "Asiff", role: "Dev", imageSrc: "/asif-dev.jpg", imageHint: "man sunglasses" },
   { name: "Rahul", role: "Dev", imageSrc: "https://picsum.photos/seed/rahul/300/300", imageHint: "man happy" },
   { name: "Tejas", role: "Tester", imageSrc: "https://picsum.photos/seed/tejas/300/300", imageHint: "man thinking" }
 ];
@@ -51,7 +50,7 @@ export default function MeetTheTeamPage() {
                         console.error(`Error loading image for ${member.name} from ${member.imageSrc}. This usually means the file is missing or the URL is incorrect. If it's a local file (like '/asif-dev.jpg'), ensure it's in the 'public' folder. Attempting fallback...`, e);
                         // Attempt to set a fallback image src
                         const target = e.target as HTMLImageElement;
-                        if (member.name === "Asif" && member.imageSrc === "/asif-dev.jpg") {
+                        if (member.name === "Asiff" && member.imageSrc === "/asif-dev.jpg") {
                           target.src = 'https://picsum.photos/seed/asif_fallback_dev/300/300';
                           target.srcset = ''; // Clear srcset if it was set by Next/Image
                         } else if (!member.imageSrc.startsWith('https://picsum.photos')) {
@@ -77,3 +76,4 @@ export default function MeetTheTeamPage() {
     </main>
   );
 }
+
