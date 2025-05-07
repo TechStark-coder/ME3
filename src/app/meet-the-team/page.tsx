@@ -9,18 +9,18 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 const teamMembers = [
-  { name: "Reevan", role: "Dev", imageSrc: "https://picsum.photos/seed/reevan/300/300", imageHint: "man portrait", backImageSrc: "https://picsum.photos/seed/card_back_reevan/300/400", backImageHint: "abstract pattern" },
-  { name: "Mohammed Sohail", role: "Dev", imageSrc: "https://picsum.photos/seed/sohail/300/300", imageHint: "man profile", backImageSrc: "https://picsum.photos/seed/card_back_sohail/300/400", backImageHint: "geometric design" },
-  { name: "Asiff", role: "Dev", imageSrc: "/asif-dev.jpeg", imageHint: "man sunglasses", backImageSrc: "/team-card-back.jpg", backImageHint: "team logo" },
-  { name: "Rahul", role: "Dev", imageSrc: "https://picsum.photos/seed/rahul/300/300", imageHint: "man happy", backImageSrc: "https://picsum.photos/seed/card_back_rahul/300/400", backImageHint: "nature scene" },
-  { name: "Tejas", role: "Tester", imageSrc: "https://picsum.photos/seed/tejas/300/300", imageHint: "man thinking", backImageSrc: "https://picsum.photos/seed/card_back_tejas/300/400", backImageHint: "tech background" }
+  { name: "Reevan", role: "Dev", imageSrc: "/reevan.jpeg", imageHint: "man portrait", backImageSrc: "/reevan2.jpg", backImageHint: "abstract pattern" },
+  { name: "Mohammed Sohail", role: "Dev", imageSrc: "/sohail.jpeg", imageHint: "man profile", backImageSrc: "/sohail2.jpg", backImageHint: "geometric design" },
+  { name: "Asiff", role: "Dev", imageSrc: "/asif.jpeg", imageHint: "man sunglasses", backImageSrc: "/asif2.jpg", backImageHint: "team logo" },
+  { name: "Rahul", role: "Dev", imageSrc: "/rahul.jpeg", imageHint: "man happy", backImageSrc: "/rahul2.jpg", backImageHint: "nature scene" },
+  { name: "Tejas", role: "Tester", imageSrc: "/tejas.jpeg", imageHint: "man thinking", backImageSrc: "/tejas2.jpg", backImageHint: "tech background" }
 ];
 
 export default function MeetTheTeamPage() {
   return (
     <main 
       className="flex min-h-[calc(100vh-3.5rem)] flex-col items-center p-4 md:p-8 relative z-10 bg-cover bg-center bg-no-repeat"
-      style={{ backgroundImage: "url('/PXL_20250218_193527020.jpg')" }}
+      style={{ backgroundImage: "url('/asif2.jpg')" }}
     >
       <div className="w-full max-w-5xl animate-fade-slide-in bg-black/50 backdrop-blur-sm p-6 rounded-lg">
         <div className="flex justify-between items-center mb-10">
@@ -50,13 +50,19 @@ export default function MeetTheTeamPage() {
                           data-ai-hint={member.imageHint}
                           className="rounded-full"
                           onError={(e) => {
-                              console.error(`Error loading image for ${member.name} from ${member.imageSrc}. This usually means the file is missing or the URL is incorrect. If it's a local file (like '/asif-dev.jpeg'), ensure it's in the 'public' folder. Attempting fallback...`, e);
+                              console.error(`Error loading image for ${member.name} from ${member.imageSrc}. This usually means the file is missing or the URL is incorrect. If it's a local file (like '${member.imageSrc}'), ensure it's in the 'public' folder. Attempting fallback...`, e);
                               const target = e.target as HTMLImageElement;
-                              if (member.name === "Asiff" && member.imageSrc === "/asif-dev.jpeg") {
+                              // Specific fallback for Asiff if his specific local image fails
+                              if (member.name === "Asiff" && member.imageSrc === "/asif.jpeg") {
                                 target.src = 'https://picsum.photos/seed/asif_fallback_dev/300/300';
                                 target.srcset = ''; 
-                              } else if (!member.imageSrc.startsWith('https://picsum.photos')) {
-                                target.src = 'https://picsum.photos/seed/generic_fallback/300/300';
+                              } else if (member.imageSrc && !member.imageSrc.startsWith('https://picsum.photos')) {
+                                // Generic fallback for other local images that might fail
+                                target.src = `https://picsum.photos/seed/generic_fallback_${member.name.toLowerCase()}/300/300`;
+                                target.srcset = '';
+                              } else {
+                                // Fallback for picsum URLs themselves if they error for some reason
+                                target.src = 'https://picsum.photos/seed/remote_error_fallback/300/300';
                                 target.srcset = '';
                               }
                           }}
@@ -72,7 +78,7 @@ export default function MeetTheTeamPage() {
                 </div>
                 <div className="flip-card-back bg-neutral-50/90 border-neutral-200/50">
                   <Image
-                    src={member.backImageSrc}
+                    src={member.backImageSrc || "/team-card-back.jpg"} // Default back image if not specified
                     alt={`Details for ${member.name}`}
                     layout="fill"
                     objectFit="contain"
@@ -81,16 +87,19 @@ export default function MeetTheTeamPage() {
                      onError={(e) => {
                               console.error(`Error loading back image for ${member.name} from ${member.backImageSrc}. Ensure this file exists in the 'public' directory and the filename (including extension and case) is an exact match. Attempting fallback...`, e);
                               const target = e.target as HTMLImageElement;
-                              if (member.name === "Asiff" && member.backImageSrc === "/team-card-back.jpg") {
+                              // Specific fallback for Asiff's back image if it's the known one that fails
+                              if (member.name === "Asiff" && member.backImageSrc === "/asif2.jpg") {
                                 target.src = 'https://picsum.photos/seed/fallback_back_asiff_specific/300/400';
+                                target.srcset = ''; 
                               } else if (member.backImageSrc && !member.backImageSrc.startsWith('https://picsum.photos')) {
                                 // Fallback for any other local back images that might fail
-                                target.src = 'https://picsum.photos/seed/fallback_back_other_local/300/400';
+                                target.src = `https://picsum.photos/seed/fallback_back_other_local_${member.name.toLowerCase()}/300/400`;
+                                target.srcset = ''; 
                               } else {
                                 // Fallback for picsum URLs themselves if they error
                                 target.src = 'https://picsum.photos/seed/fallback_back_remote_error/300/400';
+                                target.srcset = ''; 
                               }
-                              target.srcset = ''; // Clear srcset to prevent conflicts with new src
                           }}
                   />
                 </div>
@@ -102,4 +111,3 @@ export default function MeetTheTeamPage() {
     </main>
   );
 }
-
