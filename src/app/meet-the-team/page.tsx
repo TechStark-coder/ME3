@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 const teamMembers = [
   { name: "Reevan", role: "Dev", imageSrc: "https://picsum.photos/seed/reevan/300/300", imageHint: "man portrait" },
   { name: "Mohammed Sohail", role: "Dev", imageSrc: "https://picsum.photos/seed/sohail/300/300", imageHint: "man profile" },
-  { name: "Asif", role: "Dev", imageSrc: "https://picsum.photos/seed/asif/300/300", imageHint: "man sunglasses" },
+  { name: "Asif", role: "Dev", imageSrc: "https://picsum.photos/seed/asif_dev_updated/300/300", imageHint: "man sunglasses" },
   { name: "Rahul", role: "Dev", imageSrc: "https://picsum.photos/seed/rahul/300/300", imageHint: "man happy" },
   { name: "Tejas", role: "Tester", imageSrc: "https://picsum.photos/seed/tejas/300/300", imageHint: "man thinking" }
 ];
@@ -32,7 +32,7 @@ export default function MeetTheTeamPage() {
             </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6 md:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 md:gap-8">
           {teamMembers.map((member, index) => (
             <Card key={index} className="bg-neutral-50 border-neutral-200 shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 rounded-xl overflow-hidden">
               <CardHeader className="items-center text-center p-6 bg-gradient-to-br from-teal-50 to-sky-50">
@@ -60,3 +60,4 @@ export default function MeetTheTeamPage() {
     </main>
   );
 }
+
