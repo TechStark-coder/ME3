@@ -22,13 +22,13 @@ export default function MeetTheTeamPage() {
       className="flex min-h-[calc(100vh-3.5rem)] flex-col items-center p-4 md:p-8 relative z-10 bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: "url('/PXL_20250218_193527020.jpg')" }}
     >
-      <div className="w-full max-w-5xl animate-fade-slide-in bg-black/50 backdrop-blur-sm p-6 rounded-lg"> {/* Added a semi-transparent overlay for readability */}
+      <div className="w-full max-w-5xl animate-fade-slide-in bg-black/50 backdrop-blur-sm p-6 rounded-lg">
         <div className="flex justify-between items-center mb-10">
-            <h1 className="text-3xl md:text-4xl font-bold text-white"> {/* Changed text to white for contrast */}
+            <h1 className="text-3xl md:text-4xl font-bold text-white"> 
                 Meet Our Team
             </h1>
             <Link href="/" passHref legacyBehavior>
-                <Button variant="outline" className="border-neutral-300 text-neutral-100 hover:bg-neutral-700 hover:border-neutral-400 transition-colors bg-black/30 hover:bg-black/50"> {/* Adjusted button for contrast */}
+                <Button variant="outline" className="border-neutral-300 text-neutral-100 hover:bg-neutral-700 hover:border-neutral-400 transition-colors bg-black/30 hover:bg-black/50"> 
                     <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
                 </Button>
             </Link>
@@ -66,11 +66,11 @@ export default function MeetTheTeamPage() {
                       <CardDescription className="text-teal-600 font-medium text-sm md:text-base">{member.role}</CardDescription>
                     </CardHeader>
                     <CardContent className="p-4 text-center flex-grow">
-                       <p className="text-sm text-neutral-700">Hover to see more!</p> {/* Darker text for light card bg */}
+                       <p className="text-sm text-neutral-700">Hover to see more!</p>
                     </CardContent>
                   </Card>
                 </div>
-                <div className="flip-card-back bg-neutral-50/90 border-neutral-200/50"> {/* Added bg and border to back like front card */}
+                <div className="flip-card-back bg-neutral-50/90 border-neutral-200/50">
                   <Image
                     src={member.backImageSrc}
                     alt={`Details for ${member.name}`}
@@ -79,14 +79,18 @@ export default function MeetTheTeamPage() {
                     data-ai-hint={member.backImageHint || "fun image"}
                     className="rounded-lg"
                      onError={(e) => {
-                              console.error(`Error loading back image for ${member.name} from ${member.backImageSrc}.`, e);
+                              console.error(`Error loading back image for ${member.name} from ${member.backImageSrc}. Ensure this file exists in the 'public' directory and the filename (including extension and case) is an exact match. Attempting fallback...`, e);
                               const target = e.target as HTMLImageElement;
                               if (member.name === "Asiff" && member.backImageSrc === "/team-card-back.jpg") {
-                                target.src = 'https://picsum.photos/seed/fallback_back_asif/300/400';
+                                target.src = 'https://picsum.photos/seed/fallback_back_asiff_specific/300/400';
+                              } else if (member.backImageSrc && !member.backImageSrc.startsWith('https://picsum.photos')) {
+                                // Fallback for any other local back images that might fail
+                                target.src = 'https://picsum.photos/seed/fallback_back_other_local/300/400';
                               } else {
-                                target.src = 'https://picsum.photos/seed/fallback_back_generic/300/400'; 
+                                // Fallback for picsum URLs themselves if they error
+                                target.src = 'https://picsum.photos/seed/fallback_back_remote_error/300/400';
                               }
-                              target.srcset = '';
+                              target.srcset = ''; // Clear srcset to prevent conflicts with new src
                           }}
                   />
                 </div>
