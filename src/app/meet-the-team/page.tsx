@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -46,11 +47,19 @@ export default function MeetTheTeamPage() {
                     objectFit="cover"
                     data-ai-hint={member.imageHint}
                     className="rounded-full"
-                    // Add onError for picsum to see if it's a network issue for placeholder
                     onError={(e) => {
-                        console.error(`Error loading image for ${member.name}: ${member.imageSrc}. Ensure the image exists in the public folder if it's a local path.`, e);
-                        // Optionally, set a fallback image if the local image fails to load
-                        // e.currentTarget.src = 'https://picsum.photos/seed/fallback/300/300';
+                        console.error(`Error loading image for ${member.name} from ${member.imageSrc}. This usually means the file is missing or the URL is incorrect. If it's a local file (like '/asif-dev.jpg'), ensure it's in the 'public' folder. Attempting fallback...`, e);
+                        // Attempt to set a fallback image src
+                        const target = e.target as HTMLImageElement;
+                        if (member.name === "Asif" && member.imageSrc === "/asif-dev.jpg") {
+                          target.src = 'https://picsum.photos/seed/asif_fallback_dev/300/300';
+                          target.srcset = ''; // Clear srcset if it was set by Next/Image
+                        } else if (!member.imageSrc.startsWith('https://picsum.photos')) {
+                          // Generic fallback for other local images if they were to fail
+                          target.src = 'https://picsum.photos/seed/generic_fallback/300/300';
+                          target.srcset = '';
+                        }
+                        // For picsum URLs themselves, if they fail, not much more to do without a static error image asset.
                     }}
                   />
                 </div>
