@@ -12,8 +12,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { RefreshCw, CheckCircle, XCircle, Info } from 'lucide-react';
+import { RefreshCw, CheckCircle, XCircle, Info, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import jsPDF from 'jspdf';
 
 interface TypewriterProps {
   text: string;
@@ -110,6 +111,40 @@ const ResultsPopup: React.FC<ResultsPopupProps> = ({
     IconComponent = hasResults ? CheckCircle : XCircle;
   }
 
+  const handleDownloadPdf = () => {
+    const doc = new jsPDF();
+  
+    doc.setFontSize(18);
+    doc.text("AI List Details", 14, 22); 
+  
+    doc.setFontSize(12);
+    let yPosition = 30;
+    const margin = 14;
+    const MaxWidth = doc.internal.pageSize.getWidth() - 2 * margin;
+  
+    results.forEach((item, index) => {
+      const textLines = doc.splitTextToSize(`${index + 1}. ${item}`, MaxWidth);
+      
+      // Check if there's enough space for the lines, if not, add a new page
+      if (yPosition + (textLines.length * 7) > doc.internal.pageSize.getHeight() - margin) {
+        doc.addPage();
+        yPosition = margin; // Reset Y position for new page
+      }
+
+      textLines.forEach((line: string) => {
+        if (yPosition > doc.internal.pageSize.getHeight() - margin) { 
+          doc.addPage();
+          yPosition = margin;
+        }
+        doc.text(line, margin, yPosition);
+        yPosition += 7; // Line height
+      });
+      yPosition += 3; // Extra space between items
+    });
+  
+    doc.save("AI-List-Details.pdf");
+  };
+
 
   return (
     <AlertDialog open={open} onOpenChange={(isOpen) => { if (!isOpen) handleClose(); else setOpen(true);}}>
@@ -197,12 +232,22 @@ const ResultsPopup: React.FC<ResultsPopupProps> = ({
           </>
         )}
 
-        <AlertDialogFooter className="mt-6 sm:justify-center">
+        <AlertDialogFooter className="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 gap-2 sm:gap-0">
+          {hasResults && (
+            <Button
+              onClick={handleDownloadPdf}
+              variant="default"
+              className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90 shadow-md transition-all hover:scale-105 hover:shadow-lg active:scale-95"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Download
+            </Button>
+          )}
           <AlertDialogAction asChild>
             <Button
               onClick={handleClose}
               variant="outline"
-              className="w-full sm:w-auto border-foreground/30 hover:bg-accent/10 hover:border-accent transition-all"
+              className="w-full sm:w-auto"
             >
               <RefreshCw className="mr-2 h-4 w-4" /> {isSingleImageAnalysis ? "Analyze Another" : "Start Over"}
             </Button>
