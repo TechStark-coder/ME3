@@ -9,23 +9,26 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 const teamMembers = [
-  { name: "Reevan", role: "Dev", imageSrc: "https://picsum.photos/seed/reevan/300/300", imageHint: "man portrait", backImageSrc: "https://picsum.photos/seed/card_back_reevan/300/400" },
-  { name: "Mohammed Sohail", role: "Dev", imageSrc: "https://picsum.photos/seed/sohail/300/300", imageHint: "man profile", backImageSrc: "https://picsum.photos/seed/card_back_sohail/300/400" },
-  { name: "Asiff", role: "Dev", imageSrc: "/asif-dev.jpeg", imageHint: "man sunglasses", backImageSrc: "https://picsum.photos/seed/card_back_asiff/300/400" },
-  { name: "Rahul", role: "Dev", imageSrc: "https://picsum.photos/seed/rahul/300/300", imageHint: "man happy", backImageSrc: "https://picsum.photos/seed/card_back_rahul/300/400" },
-  { name: "Tejas", role: "Tester", imageSrc: "https://picsum.photos/seed/tejas/300/300", imageHint: "man thinking", backImageSrc: "https://picsum.photos/seed/card_back_tejas/300/400" }
+  { name: "Reevan", role: "Dev", imageSrc: "https://picsum.photos/seed/reevan/300/300", imageHint: "man portrait", backImageSrc: "https://picsum.photos/seed/card_back_reevan/300/400", backImageHint: "abstract pattern" },
+  { name: "Mohammed Sohail", role: "Dev", imageSrc: "https://picsum.photos/seed/sohail/300/300", imageHint: "man profile", backImageSrc: "https://picsum.photos/seed/card_back_sohail/300/400", backImageHint: "geometric design" },
+  { name: "Asiff", role: "Dev", imageSrc: "/asif-dev.jpeg", imageHint: "man sunglasses", backImageSrc: "/team-card-back.jpg", backImageHint: "team logo" },
+  { name: "Rahul", role: "Dev", imageSrc: "https://picsum.photos/seed/rahul/300/300", imageHint: "man happy", backImageSrc: "https://picsum.photos/seed/card_back_rahul/300/400", backImageHint: "nature scene" },
+  { name: "Tejas", role: "Tester", imageSrc: "https://picsum.photos/seed/tejas/300/300", imageHint: "man thinking", backImageSrc: "https://picsum.photos/seed/card_back_tejas/300/400", backImageHint: "tech background" }
 ];
 
 export default function MeetTheTeamPage() {
   return (
-    <main className="flex min-h-[calc(100vh-3.5rem)] flex-col items-center bg-white text-neutral-900 p-4 md:p-8 relative z-10">
-      <div className="w-full max-w-5xl animate-fade-slide-in">
+    <main 
+      className="flex min-h-[calc(100vh-3.5rem)] flex-col items-center p-4 md:p-8 relative z-10 bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: "url('/PXL_20250218_193527020.jpg')" }}
+    >
+      <div className="w-full max-w-5xl animate-fade-slide-in bg-black/50 backdrop-blur-sm p-6 rounded-lg"> {/* Added a semi-transparent overlay for readability */}
         <div className="flex justify-between items-center mb-10">
-            <h1 className="text-3xl md:text-4xl font-bold text-neutral-800">
+            <h1 className="text-3xl md:text-4xl font-bold text-white"> {/* Changed text to white for contrast */}
                 Meet Our Team
             </h1>
             <Link href="/" passHref legacyBehavior>
-                <Button variant="outline" className="border-neutral-300 text-neutral-700 hover:bg-neutral-100 hover:border-neutral-400 transition-colors">
+                <Button variant="outline" className="border-neutral-300 text-neutral-100 hover:bg-neutral-700 hover:border-neutral-400 transition-colors bg-black/30 hover:bg-black/50"> {/* Adjusted button for contrast */}
                     <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
                 </Button>
             </Link>
@@ -33,11 +36,11 @@ export default function MeetTheTeamPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 md:gap-8">
           {teamMembers.map((member, index) => (
-            <div key={index} className="flip-card-container h-[400px] sm:h-[420px] md:h-[450px]"> {/* Adjust height as needed */}
+            <div key={index} className="flip-card-container h-[400px] sm:h-[420px] md:h-[450px]">
               <div className="flip-card">
                 <div className="flip-card-front">
-                  <Card className="bg-neutral-50 border-neutral-200 shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 rounded-xl overflow-hidden w-full h-full flex flex-col">
-                    <CardHeader className="items-center text-center p-6 bg-gradient-to-br from-teal-50 to-sky-50 flex-shrink-0">
+                  <Card className="bg-neutral-50/90 border-neutral-200/50 shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 rounded-xl overflow-hidden w-full h-full flex flex-col">
+                    <CardHeader className="items-center text-center p-6 bg-gradient-to-br from-teal-50/80 to-sky-50/80 flex-shrink-0">
                       <div className="relative w-32 h-32 md:w-36 md:h-36 rounded-full overflow-hidden border-4 border-teal-400 shadow-md mb-4">
                         <Image
                           src={member.imageSrc}
@@ -63,27 +66,29 @@ export default function MeetTheTeamPage() {
                       <CardDescription className="text-teal-600 font-medium text-sm md:text-base">{member.role}</CardDescription>
                     </CardHeader>
                     <CardContent className="p-4 text-center flex-grow">
-                       <p className="text-sm text-neutral-600">Hover to see more!</p>
+                       <p className="text-sm text-neutral-700">Hover to see more!</p> {/* Darker text for light card bg */}
                     </CardContent>
                   </Card>
                 </div>
-                <div className="flip-card-back">
-                  {/* Content for the back of the card */}
+                <div className="flip-card-back bg-neutral-50/90 border-neutral-200/50"> {/* Added bg and border to back like front card */}
                   <Image
                     src={member.backImageSrc}
                     alt={`Details for ${member.name}`}
                     layout="fill"
                     objectFit="contain"
-                    data-ai-hint="fun image"
+                    data-ai-hint={member.backImageHint || "fun image"}
                     className="rounded-lg"
                      onError={(e) => {
                               console.error(`Error loading back image for ${member.name} from ${member.backImageSrc}.`, e);
                               const target = e.target as HTMLImageElement;
-                              target.src = 'https://picsum.photos/seed/fallback_back_generic/300/400'; // Generic fallback for back image
+                              if (member.name === "Asiff" && member.backImageSrc === "/team-card-back.jpg") {
+                                target.src = 'https://picsum.photos/seed/fallback_back_asif/300/400';
+                              } else {
+                                target.src = 'https://picsum.photos/seed/fallback_back_generic/300/400'; 
+                              }
                               target.srcset = '';
                           }}
                   />
-                   {/* You can add text overlay or other elements here if needed */}
                 </div>
               </div>
             </div>
@@ -93,3 +98,4 @@ export default function MeetTheTeamPage() {
     </main>
   );
 }
+
