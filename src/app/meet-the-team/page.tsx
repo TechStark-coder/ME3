@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 const teamMembers = [
   { name: "Reevan", role: "Dev", imageSrc: "https://picsum.photos/seed/reevan/300/300", imageHint: "man portrait" },
   { name: "Mohammed Sohail", role: "Dev", imageSrc: "https://picsum.photos/seed/sohail/300/300", imageHint: "man profile" },
-  { name: "Asif", role: "Dev", imageSrc: "https://picsum.photos/seed/asif_dev_updated/300/300", imageHint: "man sunglasses" },
+  { name: "Asif", role: "Dev", imageSrc: "/asif-dev.jpg", imageHint: "man sunglasses" },
   { name: "Rahul", role: "Dev", imageSrc: "https://picsum.photos/seed/rahul/300/300", imageHint: "man happy" },
   { name: "Tejas", role: "Tester", imageSrc: "https://picsum.photos/seed/tejas/300/300", imageHint: "man thinking" }
 ];
