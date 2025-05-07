@@ -11,11 +11,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 const teamMembers = [
   { name: "Reevan", role: "Dev", imageSrc: "https://picsum.photos/seed/reevan/300/300", imageHint: "man portrait" },
   { name: "Mohammed Sohail", role: "Dev", imageSrc: "https://picsum.photos/seed/sohail/300/300", imageHint: "man profile" },
-  // IMPORTANT: The image for Asif is currently a placeholder to ensure something displays.
-  // To use the actual image you provided ('asif-dev.jpg'), please:
-  // 1. Place the 'asif-dev.jpg' file in the 'public' folder at the root of your project.
-  // 2. Change 'imageSrc' below from the "https://picsum.photos/..." URL back to "/asif-dev.jpg".
-  { name: "Asif", role: "Dev", imageSrc: "https://picsum.photos/seed/asifplaceholder/300/300", imageHint: "man sunglasses" },
+  // IMPORTANT: The image for Asif is now set to use 'asif-dev.jpg' from the 'public' folder.
+  // Please ensure you have placed the 'asif-dev.jpg' image file (the one you provided)
+  // in the 'public' folder at the root of your project for it to display correctly.
+  { name: "Asif", role: "Dev", imageSrc: "/asif-dev.jpg", imageHint: "man sunglasses" },
   { name: "Rahul", role: "Dev", imageSrc: "https://picsum.photos/seed/rahul/300/300", imageHint: "man happy" },
   { name: "Tejas", role: "Tester", imageSrc: "https://picsum.photos/seed/tejas/300/300", imageHint: "man thinking" }
 ];
@@ -49,7 +48,11 @@ export default function MeetTheTeamPage() {
                     data-ai-hint={member.imageHint}
                     className="rounded-full"
                     // Add onError for picsum to see if it's a network issue for placeholder
-                    onError={(e) => console.error(`Error loading image for ${member.name}: ${member.imageSrc}`, e)}
+                    onError={(e) => {
+                        console.error(`Error loading image for ${member.name}: ${member.imageSrc}. Ensure the image exists in the public folder if it's a local path.`, e);
+                        // Optionally, set a fallback image if the local image fails to load
+                        // e.currentTarget.src = 'https://picsum.photos/seed/fallback/300/300';
+                    }}
                   />
                 </div>
                 <CardTitle className="text-xl md:text-2xl font-semibold text-neutral-800">{member.name}</CardTitle>
