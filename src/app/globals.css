@@ -154,3 +154,57 @@ body {
     animation: fade-slide-in 0.7s ease-out forwards; /* Slightly slower for smoother feel */
   }
 }
+
+
+/* 3D Card Flip Animation for Team Page */
+.flip-card-container {
+  perspective: 1000px;
+  display: block; /* Ensure it behaves like a block for layout */
+}
+
+.flip-card {
+  position: relative;
+  width: 100%;
+  height: 100%; /* Ensure it fills the container */
+  transition: transform 0.8s;
+  transform-style: preserve-3d;
+}
+
+.flip-card-container:hover .flip-card {
+  transform: rotateY(180deg);
+}
+
+.flip-card-front,
+.flip-card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  -webkit-backface-visibility: hidden; /* Safari */
+  backface-visibility: hidden;
+  display: flex; /* To help center content if needed */
+  flex-direction: column; /* Stack content vertically */
+  align-items: center; /* Center content horizontally */
+  justify-content: flex-start; /* Align content to the top */
+  border-radius: var(--radius); /* Match ShadCN card radius */
+  overflow: hidden; /* Ensure content stays within card bounds */
+}
+
+.flip-card-front {
+  /* Styles for the front of the card - these will be the existing Card component styles */
+  /* Tailwind classes for bg-neutral-50, border-neutral-200, shadow-lg should be applied directly to the Card component for the front face */
+}
+
+.flip-card-back {
+  transform: rotateY(180deg);
+  /* Tailwind classes for bg-neutral-50, border-neutral-200, shadow-lg */
+  @apply bg-neutral-50 border-neutral-200 shadow-lg; 
+  padding: 1rem; /* Add some padding for the back content */
+}
+
+/* Ensure images on card back are responsive and fit */
+.flip-card-back img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain; /* Or cover, depending on desired effect */
+  border-radius: calc(var(--radius) - 4px); /* Slightly smaller radius for image inside card */
+}
