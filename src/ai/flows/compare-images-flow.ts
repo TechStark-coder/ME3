@@ -104,19 +104,22 @@ You will be given two images: Image 1 (Reference) and Image 2 (Comparison).
 Your task is to perform an exhaustive, pixel-by-pixel level comparison of Image 2 against Image 1.
 Identify and describe **ALL** distinct differences, no matter how subtle, small, distant, or partially obscured they may be.
 
-**Crucial Instructions for Accuracy:**
+**Crucial Instructions for Hyper-Accuracy:**
 
-1.  **Object Analysis (Hyper-Detailed):**
-    *   **Missing Objects:** Identify items present in Image 1 but COMPLETELY ABSENT in Image 2. This includes objects that were fully visible, partially visible (e.g., "the top of a yellow toy car visible on the far shelf is missing"), or even implied by context in Image 1 and clearly gone in Image 2. For instance, if a yellow toy is partially visible behind a book in Image 1, and in Image 2 the book is still there but the space where the toy was is now empty, you must report "The partially visible yellow toy behind the book is missing."
+1.  **Object Analysis (Extreme Detail):**
+    *   **Missing Objects:** Identify items present in Image 1 but COMPLETELY ABSENT in Image 2. This includes:
+        *   Fully visible objects.
+        *   **Partially Visible/Occluded Objects:** Objects that were partially visible (e.g., "the top of a small yellow toy car visible on the far right shelf is missing") or even implied by context in Image 1 and clearly gone in Image 2. For instance, if a small yellow toy is partially visible behind a book in Image 1, and in Image 2 the book is still there but the space where the toy was is now empty or obstructed differently, you must report "The partially visible small yellow toy (previously seen on the far right shelf / behind the book) is missing."
+        *   **Contextual Absence:** If an area in Image 1 clearly contained an item (even if not fully identifiable) and that area is now empty or different in Image 2, report this change. For example, "The small object on the top-right corner shelf, partially obscured, is now missing."
     *   **Added Objects:** Identify items COMPLETELY ABSENT in Image 1 but present in Image 2. (e.g., "A new blue ball has been placed on the floor.")
     *   **Altered Objects:** Items present in both images but changed in ANY way:
         *   **Position/Rotation/Orientation:** (e.g., "The red book on the desk has been rotated 90 degrees clockwise.", "The teddy bear is now facing left instead of right.")
         *   **State:** (e.g., "The laptop is now open instead of closed.", "The flower in the vase has wilted slightly.")
         *   **Appearance:** Color changes, texture changes, damage, additions/subtractions of parts. (e.g., "The cat's fur appears slightly darker.", "The toy soldier is now missing an arm.")
 
-2.  **Partial Visibility and Occlusion:** Pay extreme attention to objects that are partially visible or occluded. If an object is visible in Image 1 (even a small part of it, like a corner of a box, a sliver of a toy, or a distant item) and that same part or the inferred whole object is missing or changed in Image 2, this is a critical difference. For example, if only the tail of a toy dinosaur is visible in Image 1 from behind a plant, and that tail is gone in Image 2 (even if the plant is still there), list "The toy dinosaur's tail (previously visible behind the plant) is missing."
+2.  **Partial Visibility, Occlusion, and Distance:** Pay EXTREME attention to objects that are partially visible, occluded by other objects, or in the distant background. If an object is visible in Image 1 (even a small part of it, like a corner of a box, a sliver of a toy, or a distant tree) and that same part or the inferred whole object is missing or changed in Image 2, this is a critical difference. For example, if only the tail of a toy dinosaur is visible in Image 1 from behind a plant, and that tail is gone in Image 2 (even if the plant is still there), list "The toy dinosaur's tail (previously visible behind the plant) is missing." Similarly, "The small, partially visible yellow object on the far right shelf in Image 1 is missing in Image 2."
 
-3.  **Distant and Background Elements:** Do not overlook items in the far background or periphery. Changes to distant trees, buildings, clouds, or even minute details on a faraway shelf are important.
+3.  **Distant and Background Elements:** Do not overlook items in the far background or periphery. Changes to distant trees, buildings, clouds, or even minute details on a faraway shelf (like the yellow toy example) are important.
 
 4.  **Subjects (People/Animals):**
     *   **Actions/Poses:** (e.g., "The person is now winking with their left eye.", "The dog's tail is now wagging instead of still.")
@@ -134,10 +137,10 @@ Identify and describe **ALL** distinct differences, no matter how subtle, small,
     *   **Lighting/Shadows:** (e.g., "The shadow of the lamp is now cast at a different angle, indicating a time change.", "A new reflection is visible on the glass surface.")
 
 **Output Format:**
-Provide a list of concise, specific, and unambiguous descriptions for each distinct difference found. Be extremely precise (e.g., "The *small, yellow, partially visible* toy car on the *top far-left* shelf is missing.", "The person's *right index finger* is now pointing upwards instead of being curled.").
+Provide a list of concise, specific, and unambiguous descriptions for each distinct difference found. Be extremely precise (e.g., "The *small, yellow, partially visible* toy car on the *top far-right* shelf is missing.", "The person's *right index finger* is now pointing upwards instead of being curled."). Describe what changed, what was added, or what is missing from Image 2 compared to Image 1.
 
 **Final Accuracy Check:**
-Before finalizing your list, meticulously review both images one last time, specifically hunting for the types of subtle differences described above. Be your own harshest critic. If, after this exhaustive scrutiny, no differences are detected, and only then, return an empty list.
+Before finalizing your list, meticulously review both images one last time, specifically hunting for the types of subtle differences described above, including partially visible, occluded, or distant items. Be your own harshest critic. If, after this exhaustive scrutiny, no differences are detected, and only then, return an empty list.
 
 First Image (Reference):
 {{media url=image1DataUri}}
