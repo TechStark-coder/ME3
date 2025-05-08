@@ -31,7 +31,7 @@ const CompareImagesOutputSchema = z.object({
   differences: z
     .array(z.string())
     .describe(
-      'A list of concise descriptions detailing every distinct difference observed in the second image compared to the first image. This includes missing/added/altered objects, changes in actions, poses, expressions, nature elements, background details, text, patterns, lighting, shadows, colors, textures, and any other notable variations.'
+      'A list of concise descriptions detailing every distinct difference observed in the second image compared to the first image. This includes missing/added/altered objects (even partially visible or distant ones), changes in actions, poses, expressions, nature elements, background details, text, patterns, lighting, shadows, colors, textures, and any other notable variations.'
     ),
 });
 export type CompareImagesOutput = z.infer<typeof CompareImagesOutputSchema>;
@@ -98,39 +98,46 @@ const compareImagesPrompt = ai.definePrompt({
     schema: CompareImagesOutputSchema,
   },
   // Define the prompt instructions using Handlebars templating - Enhanced Instructions
-  prompt: `You are an extremely meticulous and detail-oriented image analysis AI, specialized in "spot the difference" tasks. Your accuracy is paramount. Take your time to be thorough.
+  prompt: `You are an exceptionally meticulous, hyper-detailed, and eagle-eyed image analysis AI. Your specialization is "spot the difference" tasks, and your accuracy is paramount. You must be incredibly thorough, scrutinizing every detail with extreme care.
 
 You will be given two images: Image 1 (Reference) and Image 2 (Comparison).
-Your task is to perform an exhaustive pixel-by-pixel level comparison of Image 2 against Image 1.
-Identify and describe **ALL** distinct differences, no matter how subtle. Be incredibly precise.
+Your task is to perform an exhaustive, pixel-by-pixel level comparison of Image 2 against Image 1.
+Identify and describe **ALL** distinct differences, no matter how subtle, small, distant, or partially obscured they may be.
 
-Carefully examine and report differences in the following categories:
+**Crucial Instructions for Accuracy:**
 
-1.  **Objects:**
-    *   Missing objects: Items present in Image 1 but absent in Image 2. (e.g., "The blue coffee mug on the table is missing.")
-    *   Added objects: Items absent in Image 1 but present in Image 2. (e.g., "A small potted plant has been added to the windowsill.")
-    *   Altered objects: Items present in both but changed in appearance, position, rotation, or state (e.g., "The clock's hands show a different time.", "The book on the shelf is now open instead of closed.", "The cat's position has slightly shifted to the left.")
+1.  **Object Analysis (Hyper-Detailed):**
+    *   **Missing Objects:** Identify items present in Image 1 but COMPLETELY ABSENT in Image 2. This includes objects that were fully visible, partially visible (e.g., "the top of a yellow toy car visible on the far shelf is missing"), or even implied by context in Image 1 and clearly gone in Image 2. For instance, if a yellow toy is partially visible behind a book in Image 1, and in Image 2 the book is still there but the space where the toy was is now empty, you must report "The partially visible yellow toy behind the book is missing."
+    *   **Added Objects:** Identify items COMPLETELY ABSENT in Image 1 but present in Image 2. (e.g., "A new blue ball has been placed on the floor.")
+    *   **Altered Objects:** Items present in both images but changed in ANY way:
+        *   **Position/Rotation/Orientation:** (e.g., "The red book on the desk has been rotated 90 degrees clockwise.", "The teddy bear is now facing left instead of right.")
+        *   **State:** (e.g., "The laptop is now open instead of closed.", "The flower in the vase has wilted slightly.")
+        *   **Appearance:** Color changes, texture changes, damage, additions/subtractions of parts. (e.g., "The cat's fur appears slightly darker.", "The toy soldier is now missing an arm.")
 
-2.  **Subjects (People/Animals):**
-    *   Actions/Poses: Changes in what they are doing. (e.g., "The person is now smiling instead of frowning.", "The dog is now sitting instead of standing.")
-    *   Body Language/Expressions: Subtle shifts in posture or facial expression. (e.g., "The woman's left eyebrow is slightly raised.", "The man's arms are now crossed.")
-    *   Clothing/Appearance: Changes in attire, accessories, or features. (e.g., "The child's shirt color changed from red to green.", "The bird has an extra feather on its wing.")
+2.  **Partial Visibility and Occlusion:** Pay extreme attention to objects that are partially visible or occluded. If an object is visible in Image 1 (even a small part of it, like a corner of a box, a sliver of a toy, or a distant item) and that same part or the inferred whole object is missing or changed in Image 2, this is a critical difference. For example, if only the tail of a toy dinosaur is visible in Image 1 from behind a plant, and that tail is gone in Image 2 (even if the plant is still there), list "The toy dinosaur's tail (previously visible behind the plant) is missing."
 
-3.  **Environment/Background:**
-    *   Nature Elements: Differences in trees (leaf density, branches), plants (flowers bloomed/wilted), weather (clouds moved, sun position changed leading to different shadows), water bodies (ripples, level). (e.g., "The large oak tree has fewer leaves.", "A cloud shape in the top right corner is different.")
-    *   Scene Details: Changes in furniture arrangement, wall decorations, items on shelves, background buildings, vehicles. (e.g., "The painting on the back wall is slightly crooked.", "A car in the distant background is a different color.")
-    *   Text/Signs: Any alterations in letters, numbers, or symbols. (e.g., "The street sign now reads 'ELM ST' instead of 'OAK ST'.")
-    *   Patterns/Textures: Changes in patterns on fabrics, walls, floors, or textures of surfaces. (e.g., "The pattern on the curtain has an extra stripe.", "The texture of the wooden table appears smoother.")
+3.  **Distant and Background Elements:** Do not overlook items in the far background or periphery. Changes to distant trees, buildings, clouds, or even minute details on a faraway shelf are important.
 
-4.  **Visual Properties:**
-    *   Colors: Noticeable shifts in hue, saturation, or brightness of any element. (e.g., "The color of the balloon is now orange instead of yellow.")
-    *   Lighting/Shadows: Changes in the direction, intensity, or shape of light and shadows. (e.g., "The shadow cast by the chair is longer.", "There is a new light reflection on the window pane.")
+4.  **Subjects (People/Animals):**
+    *   **Actions/Poses:** (e.g., "The person is now winking with their left eye.", "The dog's tail is now wagging instead of still.")
+    *   **Body Language/Expressions:** (e.g., "The woman's smile is slightly wider.", "The man's shoulders are now slumped.")
+    *   **Clothing/Appearance:** (e.g., "The child's shoelaces are now untied.", "The bird has a small twig in its beak.")
+
+5.  **Environment/Background:**
+    *   **Nature Elements:** (e.g., "A leaf has fallen from the small plant on the windowsill.", "The puddle on the ground is smaller.")
+    *   **Scene Details:** (e.g., "A pen is missing from the desk organizer.", "The picture frame on the wall is tilted slightly more to the right.")
+    *   **Text/Signs:** (e.g., "The price tag on the item now shows '$9.99' instead of '$10.99'.")
+    *   **Patterns/Textures:** (e.g., "The wood grain pattern on the table is oriented differently.", "A small scratch is now visible on the shiny surface.")
+
+6.  **Visual Properties:**
+    *   **Colors:** (e.g., "The blue of the sky is a slightly deeper shade.")
+    *   **Lighting/Shadows:** (e.g., "The shadow of the lamp is now cast at a different angle, indicating a time change.", "A new reflection is visible on the glass surface.")
 
 **Output Format:**
-Provide a list of concise, specific descriptions for each distinct difference found. Start each description clearly identifying the element and the change. Be precise (e.g., "The *small green* car...", "The person's *right* hand...").
+Provide a list of concise, specific, and unambiguous descriptions for each distinct difference found. Be extremely precise (e.g., "The *small, yellow, partially visible* toy car on the *top far-left* shelf is missing.", "The person's *right index finger* is now pointing upwards instead of being curled.").
 
-**Accuracy Check:**
-Before finalizing your list, review both images one last time to ensure your identified differences are accurate and that you haven't missed anything. Be extremely critical of your own analysis. If no differences are detected after careful scrutiny, return an empty list.
+**Final Accuracy Check:**
+Before finalizing your list, meticulously review both images one last time, specifically hunting for the types of subtle differences described above. Be your own harshest critic. If, after this exhaustive scrutiny, no differences are detected, and only then, return an empty list.
 
 First Image (Reference):
 {{media url=image1DataUri}}
@@ -152,8 +159,8 @@ const compareImagesFlow = ai.defineFlow<
     outputSchema: CompareImagesOutputSchema,
   },
   async (input) => {
-    console.log("Executing compareImagesPrompt with default model...");
-    // Default model is defined in ai-instance.ts, typically gemini-2.0-flash
+    console.log("Executing compareImagesPrompt with default model (gemini-2.0-flash)...");
+    // Default model is defined in ai-instance.ts, which is gemini-2.0-flash
     // Ensure the model used supports vision capabilities. Gemini Flash does.
     const { output } = await compareImagesPrompt(input);
 
@@ -178,3 +185,5 @@ const compareImagesFlow = ai.defineFlow<
   }
 );
 
+
+    
